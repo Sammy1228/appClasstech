@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const Register(),
         '/dashboard': (context) => const Dashboard(),
         '/config': (context) => const Configuracion(),
-        '/perfil': (context) => const PerfilScreen(),
+        '/perfil': (context) => const PerfilScreen(tipoUsuario: "profesor"),
         '/class': (context) => const ClasesScreen(),
         '/retroalimentacion': (context) => const RetroalimentacionPage(),
       },
