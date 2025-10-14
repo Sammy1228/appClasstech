@@ -1,4 +1,6 @@
+import 'package:appzacek/firebase_options.dart';
 import 'package:appzacek/theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'splash.dart';
 import 'login.dart';
@@ -9,7 +11,10 @@ import 'perfil.dart';
 import 'class.dart';
 import 'retroalimentacio.dart';
 
-void main() {
+Future<void> main() async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 

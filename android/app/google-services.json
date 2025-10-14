@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "106333460791",
+    "project_id": "classtech-c37b1",
+    "storage_bucket": "classtech-c37b1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:106333460791:android:631f36978dbc5b88be22b2",
+        "android_client_info": {
+          "package_name": "com.example.appzacek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0T3hKoXvry3iFz-cpNZz8rV83EG2SuV4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
