@@ -1,43 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import '../Utils/responsive.dart';
+import '../providers/provider_autenticacion.dart';
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
   const Login({super.key});
 
   @override
+  State<Login> createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  final TextEditingController _emailCtrl = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
+  bool _isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
-final responsive = Responsive(context);
+    final responsive = Responsive(context);
 
     return Scaffold(
       backgroundColor: AppTheme.primaryColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
-     return Column( 
-        children: [
-          // 1. Fondo superior con texto
-          Column(
-            mainAxisSize: MainAxisSize.min, // Ocupa solo el espacio necesario
+          return Column(
             children: [
-              SizedBox(height: responsive.screenHeight * (responsive.isPortrait ? 0.15 : 0.08)),
-              Center(
-                child: Text(
-                  "¡Bienvenido!\nIniciar Sesión",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: responsive.fontScale,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.backgroundColor,
+              // 1. Fondo superior con texto
+              Column(
+                mainAxisSize: MainAxisSize.min, // Ocupa solo el espacio necesario
+                children: [
+                  SizedBox(height: responsive.screenHeight * (responsive.isPortrait ? 0.15 : 0.08)),
+                  Center(
+                    child: Text(
+                      "¡Bienvenido!\nIniciar Sesión",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: responsive.fontScale,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.backgroundColor,
+                      ),
+                    ),
                   ),
-                ),
-              ),
 
-            ],
-          ),
+                ],
+              ),
 
               // Parte blanca inferior con formulario
               Expanded(
-                
+
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
                   width: double.infinity,
@@ -47,8 +58,8 @@ final responsive = Responsive(context);
                   ),
                   decoration: const BoxDecoration(
                     color: AppTheme.backgroundColor,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(40)),
+                    borderRadius: 
+                    BorderRadius.vertical(top: Radius.circular(40)),
                   ),
                   child: SingleChildScrollView(
                     child: ConstrainedBox(
@@ -60,10 +71,12 @@ final responsive = Responsive(context);
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           TextField(
+                            controller: _emailCtrl,
                             decoration: AppTheme.inputDecoration("Correo"),
                           ),
                           SizedBox(height: responsive.screenHeight * 0.02),
                           TextField(
+                            controller: _passwordCtrl,
                             obscureText: true,
                             decoration: AppTheme.inputDecoration("Contraseña"),
                           ),
@@ -94,12 +107,43 @@ final responsive = Responsive(context);
                                 vertical: responsive.screenHeight * 0.018,
                               ),
                             ),
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(
-                                  context, '/dashboard');
+                            onPressed: () async {
+                              final auth = Provider.of<Authentication>(context, listen: false);
+                              final email = _emailCtrl.text.trim();
+                              final password = _passwordCtrl.text;
+
+                              if (email.isEmpty || password.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Por favor ingresa correo y contraseña")),
+                                );
+                                return;
+                              }
+
+                              auth.setEmail = email;
+                              auth.setPassword = password;
+
+                              setState(() => _isLoading = true);
+
+                              try {
+                                final user = await auth.login(); 
+                                if (user != null && auth.tipoUsuario.isNotEmpty) {
+                                  Navigator.pushReplacementNamed(context, '/dashboard');
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Credenciales incorrectas")),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                                return;
+                              } finally {
+                                setState(() => _isLoading = false);
+                              }
                             },
                             child: Text(
-                              "Iniciar Sesión",
+                              _isLoading ? "Cargando..." : "Iniciar Sesión",
                               style: TextStyle(
                                 fontSize: responsive.isPortrait
                                     ? responsive.screenWidth * 0.045

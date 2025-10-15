@@ -1,4 +1,5 @@
 import 'package:appzacek/database/database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -113,10 +114,67 @@ class Authentication extends ChangeNotifier{
     }
   }
 
+
+  //Inicio de sesión 
+Future<User?> login() async {
+    try {
+      print("Intentando iniciar sesión con $_email");
+      _tipoUsuario = ''; // limpiar tipo antes del intento
+
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _email.trim(),
+        password: _password,
+      );
+
+      final user = credential.user;
+      print("Usuario obtenido: $user");
+      if (user == null) throw Exception("Correo o contraseña incorrectos");
+
+      // Buscar tipo de usuario en Firestore
+      final results = await Future.wait([
+        FirebaseFirestore.instance.collection('profesores').doc(user.uid).get(),
+        FirebaseFirestore.instance.collection('alumnos').doc(user.uid).get(),
+      ]);
+
+      final docProfesor = results[0];
+      final docAlumno = results[1];
+
+      if (docProfesor.exists) {
+        _tipoUsuario = 'profesor';
+      } else if (docAlumno.exists) {
+        _tipoUsuario = 'alumno';
+      } else {
+        throw Exception("Usuario no encontrado en la base de datos");
+      }
+
+      _isLoggedIn = true;
+      notifyListeners();
+      return user;
+    } on FirebaseAuthException catch (e) {
+      _isLoggedIn = false;
+      _tipoUsuario = ''; // limpiar al fallar
+      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+        throw Exception("Correo o contraseña incorrectos");
+      } else {
+        throw Exception("Error de autenticación: ${e.message}");
+      }
+    } catch (e) {
+      _isLoggedIn = false;
+      _tipoUsuario = '';
+      throw Exception("Error de autenticación: ${e.toString()}"); // <-- Lanza la excepción
+    }
+  }
+
+
+
   // cerrar sesión
   Future<void> logout() async{
     await FirebaseAuth.instance.signOut();
     _isLoggedIn = false;
+    _tipoUsuario = '';
     notifyListeners();
   }
+
+
+
 }
