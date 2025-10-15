@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../Utils/responsive.dart';
 
 class ActividadPage extends StatelessWidget {
   const ActividadPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final responsive = Responsive(context);
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
-        title: const Text("Título de la actividad"),
+        title: Text(
+          "Título de la actividad",
+          style: TextStyle(
+            fontSize: responsive.titleFontSize * 0.6, // Escala adaptada
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.white),
@@ -20,12 +28,16 @@ class ActividadPage extends StatelessWidget {
       ),
       drawer: const Drawer(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.horizontalPadding,
+          vertical: responsive.verticalPadding,
+        ),
         child: Column(
           children: [
             // Caja amarilla
             Container(
-              padding: const EdgeInsets.all(16),
+              width: responsive.fieldWidth,
+              padding: EdgeInsets.all(responsive.wp(4)),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFE5B4),
                 borderRadius: BorderRadius.circular(16),
@@ -36,75 +48,112 @@ class ActividadPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Fecha de entrega",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: responsive.scale(0.045, 0.03),
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: responsive.hp(1)),
                   Text(
                     "Descripción de la actividad:\nLorem ipsum dolor sit amet...",
-                    style: AppTheme.bodyText,
+                    style: AppTheme.bodyText.copyWith(
+                      fontSize: responsive.scale(0.04, 0.03),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+
+            SizedBox(height: responsive.hp(2)),
 
             // Campo URL
-            TextField(
-              decoration: AppTheme.inputDecoration(
-                "Campo de url del video (solo si se requiere)",
+            SizedBox(
+              width: responsive.fieldWidth,
+              child: TextField(
+                decoration: AppTheme.inputDecoration(
+                  "Campo de URL del video (solo si se requiere)",
+                ),
               ),
             ),
-            const SizedBox(height: 20),
+
+            SizedBox(height: responsive.hp(2)),
 
             // Subida de archivos
             Container(
-              padding: const EdgeInsets.all(32),
+              width: responsive.fieldWidth,
+              padding: EdgeInsets.all(responsive.wp(8)),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundColor,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 4),
+                ],
               ),
               child: Column(
                 children: [
-                  AppTheme.themedIcon(Icons.upload_file, size: 64),
-                  const SizedBox(height: 8),
-                  const Text("Adjunta tus archivos"),
+                  AppTheme.themedIcon(Icons.upload_file,
+                      size: responsive.scale(0.15, 0.08)),
+                  SizedBox(height: responsive.hp(1)),
+                  Text(
+                    "Adjunta tus archivos",
+                    style: TextStyle(
+                      fontSize: responsive.scale(0.04, 0.03),
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+
+            SizedBox(height: responsive.hp(3)),
 
             // Botón enviar
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 14,
+            SizedBox(
+              width: responsive.fieldWidth * 0.7,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.secondaryColor,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.wp(6),
+                    vertical: responsive.hp(1.5),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                onPressed: () {},
+                child: Text(
+                  "Enviar",
+                  style: TextStyle(
+                    color: AppTheme.backgroundColor,
+                    fontSize: responsive.scale(0.045, 0.03),
+                  ),
                 ),
-              ),
-              onPressed: () {},
-              child: const Text(
-                "Enviar",
-                style: TextStyle(color: AppTheme.backgroundColor),
               ),
             ),
-            const SizedBox(height: 20),
+
+            SizedBox(height: responsive.hp(3)),
 
             // Retroalimentación
             ListTile(
               leading: CircleAvatar(
                 backgroundColor: Colors.redAccent,
-                child: const Text(
+                radius: responsive.wp(5),
+                child: Text(
                   "D",
-                  style: TextStyle(color: AppTheme.backgroundColor),
+                  style: TextStyle(
+                    color: AppTheme.backgroundColor,
+                    fontSize: responsive.scale(0.04, 0.03),
+                  ),
                 ),
               ),
-              title: const Text("Retroalimentación del alumno (opcional)"),
+              title: Text(
+                "Retroalimentación del alumno (opcional)",
+                style: TextStyle(
+                  fontSize: responsive.scale(0.04, 0.03),
+                ),
+              ),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
+import 'Utils/responsive.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -20,32 +21,42 @@ class _SplashScreenState extends State<Splash> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = Responsive(context);
+
     return Scaffold(
       backgroundColor: AppTheme.primaryColor,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "¡Bienvenido!",
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: responsive.wp(8)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "¡Bienvenido!",
+                style: TextStyle(
+                  fontSize: responsive.dp(6),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 30),
-            Image.asset(AppTheme.logoPath, width: 150, height: 150),
-            const SizedBox(height: 30),
-            const Text(
-              "Classtech",
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
+              SizedBox(height: responsive.hp(4)),
+              Image.asset(
+                AppTheme.logoPath,
+                width: responsive.wp(40),
+                height: responsive.wp(40),
               ),
-            ),
-          ],
+              SizedBox(height: responsive.hp(4)),
+              Text(
+                "Classtech",
+                style: TextStyle(
+                  fontSize: responsive.dp(4.5),
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

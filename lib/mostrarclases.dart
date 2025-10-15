@@ -1,25 +1,31 @@
 import 'package:appzacek/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../Utils/responsive.dart';
 
 class MostrarClasePage extends StatelessWidget {
   const MostrarClasePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final responsive = Responsive(context);
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
-        title: const Text("Título de la clase"),
-        titleTextStyle: const TextStyle(
-          color: AppTheme.backgroundColor,
-          fontSize: 20,
+        title: Text(
+          "Título de la clase",
+          style: TextStyle(
+            color: AppTheme.backgroundColor,
+            fontSize: responsive.dp(5),
+          ),
         ),
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
-              icon: const Icon(Icons.menu, color: AppTheme.backgroundColor),
+              icon: Icon(Icons.menu,
+                  color: AppTheme.backgroundColor, size: responsive.dp(5.5)),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -28,22 +34,26 @@ class MostrarClasePage extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete, color: AppTheme.backgroundColor),
+            icon: Icon(Icons.delete,
+                color: AppTheme.backgroundColor, size: responsive.dp(5.5)),
             onPressed: () {
-              _showDeleteConfirmationDialog(context);
+              _showDeleteConfirmationDialog(context, responsive);
             },
           ),
         ],
       ),
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.horizontalPadding,
+          vertical: responsive.verticalPadding,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Caja amarilla con diseño de la imagen
+            // Caja amarilla con información de la clase
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(responsive.dp(4)),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFE5B4),
                 borderRadius: BorderRadius.circular(16),
@@ -52,60 +62,63 @@ class MostrarClasePage extends StatelessWidget {
                 ],
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Aquí se reemplaza Expanded por Flexible
                   Flexible(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Química avanzada",
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: responsive.dp(4.8),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Nombre del docente",
-                          style: TextStyle(fontSize: 16, color: Colors.black54),
-                        ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: responsive.hp(1)),
                         Text(
-                          "Descripcion: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et molestie felis. Duis eget urna id odio luctus consequat ut at dui. In scelerisque purus magna. Vestibulum eget erat finibus, vehicula sapien a, sollicitudin velit. Duis tincidunt lectus libero at ultrices. Vivamus congue vitae lectus dignissim accumsan. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur finibus fermentum felis sit amet ullamcorper. Nunc sit amet fringilla orci, vel vehicula sem.",
-                          style: AppTheme.bodyText,
+                          "Nombre del docente",
+                          style: TextStyle(
+                            fontSize: responsive.dp(3.8),
+                            color: Colors.black54,
+                          ),
+                        ),
+                        SizedBox(height: responsive.hp(1)),
+                        Text(
+                          "Descripcion: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et molestie felis. Duis eget urna id odio luctus consequat ut at dui. In scelerisque purus magna...",
+                          style: AppTheme.bodyText.copyWith(
+                            fontSize: responsive.dp(3.5),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  const Image(
-                    image: AssetImage(
-                      'assets/images/logo.png',
-                    ), // Revisa esta ruta
-                    width: 80,
-                    height: 80,
+                  SizedBox(width: responsive.wp(3)),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: responsive.wp(18),
+                    height: responsive.wp(18),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: responsive.hp(2)),
 
-            // Título para la sección de actividades
-            const Text(
+            // Título de sección
+            Text(
               "Actividades",
               style: TextStyle(
-                fontSize: 20,
+                fontSize: responsive.dp(5),
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryColor,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: responsive.hp(2)),
 
             // Lista de actividades
             Column(
               children: List.generate(4, (index) {
-                return _buildActivityCard();
+                return _buildActivityCard(responsive);
               }),
             ),
           ],
@@ -114,11 +127,11 @@ class MostrarClasePage extends StatelessWidget {
     );
   }
 
-  // Widget para la tarjeta de actividad
-  Widget _buildActivityCard() {
+  // Tarjeta de actividad
+  Widget _buildActivityCard(Responsive responsive) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: responsive.hp(1.5)),
+      padding: EdgeInsets.all(responsive.dp(3.5)),
       decoration: BoxDecoration(
         color: AppTheme.backgroundColor,
         borderRadius: BorderRadius.circular(16),
@@ -129,56 +142,62 @@ class MostrarClasePage extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.edit, color: AppTheme.primaryColor),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(Icons.edit,
+                  color: AppTheme.primaryColor, size: responsive.dp(5)),
+              SizedBox(width: responsive.wp(2)),
+              Text(
                 "Actividad",
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: responsive.dp(4),
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryColor,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          const Text(
+          SizedBox(height: responsive.hp(0.5)),
+          Text(
             "Fecha de entrega",
-            style: TextStyle(color: Colors.black54, fontSize: 12),
+            style: TextStyle(color: Colors.black54, fontSize: responsive.dp(3)),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: responsive.hp(0.8)),
+          Text(
             "Descripción de la actividad dentro de la clase",
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: Colors.black54, fontSize: responsive.dp(3.3)),
           ),
         ],
       ),
     );
   }
 
-  // Cuadro de diálogo de confirmación para eliminar
-  void _showDeleteConfirmationDialog(BuildContext context) {
+  // Diálogo de confirmación
+  void _showDeleteConfirmationDialog(
+      BuildContext context, Responsive responsive) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            "Eliminar clase",
+            style: TextStyle(fontSize: responsive.dp(4.5)),
           ),
-          title: const Text("Eliminar clase"),
-          content: const Text(
+          content: Text(
             "¿Estás seguro de que quieres eliminar esta clase? Esta acción no se puede deshacer.",
+            style: TextStyle(fontSize: responsive.dp(3.4)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar"),
+              child: Text(
+                "Cancelar",
+                style: TextStyle(fontSize: responsive.dp(3.5)),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context); // Cierra el popup
-                // Aquí podrías agregar la lógica para eliminar la clase
-                // Por ejemplo, una llamada a un servicio
+                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text("Clase eliminada con éxito."),
@@ -188,9 +207,12 @@ class MostrarClasePage extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text(
+              child: Text(
                 "Eliminar",
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: responsive.dp(3.5),
+                ),
               ),
             ),
           ],

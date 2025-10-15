@@ -1,6 +1,7 @@
 import 'package:appzacek/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../Utils/responsive.dart';
 
 class CrearClasePage extends StatefulWidget {
   const CrearClasePage({super.key});
@@ -20,16 +21,7 @@ class _CrearClasePageState extends State<CrearClasePage> {
 
   @override
   Widget build(BuildContext context) {
-    // MediaQuery para diseño responsive
-    final size = MediaQuery.of(context).size;
-    final orientation = MediaQuery.of(context).orientation;
-
-    // Ajustar padding y ancho según orientación
-    final double horizontalPadding =
-        orientation == Orientation.portrait ? 16.0 : size.width * 0.2;
-    final double fieldWidth =
-        orientation == Orientation.portrait ? size.width * 0.9 : size.width * 0.6;
-
+    final responsive = Responsive(context);
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
@@ -39,10 +31,10 @@ class _CrearClasePageState extends State<CrearClasePage> {
       ),
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
+        padding: EdgeInsets.symmetric(horizontal: responsive.horizontalPadding, vertical: 16),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: fieldWidth),
+            constraints: BoxConstraints(maxWidth: responsive.fieldWidth),
             child: Column(
               children: [
                 TextField(

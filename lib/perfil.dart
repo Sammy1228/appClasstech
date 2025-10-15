@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../theme/app_theme.dart';
+import '../Utils/responsive.dart';
 
 class PerfilScreen extends StatefulWidget {
   final String tipoUsuario; // "estudiante" o "profesor"
@@ -26,13 +27,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
-    //  MediaQuery para diseño responsive
-    final size = MediaQuery.of(context).size;
-    final orientation = MediaQuery.of(context).orientation;
-    final double horizontalPadding =
-        orientation == Orientation.portrait ? 16.0 : size.width * 0.2;
-    final double fieldWidth =
-        orientation == Orientation.portrait ? size.width * 0.9 : size.width * 0.6;
+final responsive = Responsive(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -48,17 +43,17 @@ class _PerfilScreenState extends State<PerfilScreen> {
       drawer: const CustomDrawer(),
       backgroundColor: AppTheme.backgroundColor,
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
+        padding: EdgeInsets.symmetric(horizontal: responsive.horizontalPadding, vertical: 20),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: fieldWidth),
+            constraints: BoxConstraints(maxWidth: responsive.fieldWidth),
             child: Column(
               children: [
-                SizedBox(height: size.height * 0.04),
+                SizedBox(height: responsive.size.height * 0.04),
 
                 // 🧑 Avatar de perfil
                 CircleAvatar(
-                  radius: size.width * 0.15,
+                  radius: responsive.size.width * 0.15,
                   backgroundColor: AppTheme.secondaryColor.withOpacity(0.7),
                   child: const Text(
                     "NA",
@@ -69,37 +64,37 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: size.height * 0.04),
+                SizedBox(height: responsive.size.height * 0.04),
 
                 //  Campos comunes
                 _buildTextField("Nombres"),
-                SizedBox(height: size.height * 0.02),
+                SizedBox(height: responsive.size.height * 0.02),
                 Row(
                   children: [
                     Expanded(child: _buildTextField("Apellido P")),
-                    SizedBox(width: size.width * 0.02),
+                    SizedBox(width: responsive.size.width * 0.02),
                     Expanded(child: _buildTextField("Apellido M")),
                   ],
                 ),
-                SizedBox(height: size.height * 0.02),
+                SizedBox(height: responsive.size.height * 0.02),
 
                 //  Si es profesor, mostrar instituciones
                 if (widget.tipoUsuario == "profesor") ...[
                   _buildInstitucionesList(context),
-                  SizedBox(height: size.height * 0.02),
+                  SizedBox(height: responsive.size.height * 0.02),
                   _buildTextField("Correo"),
-                  SizedBox(height: size.height * 0.02),
+                  SizedBox(height: responsive.size.height * 0.02),
                   _buildTextField("Contraseña"),
                 ] else ...[
                   // Si es estudiante
                   _buildTextField("Correo"),
-                  SizedBox(height: size.height * 0.02),
+                  SizedBox(height: responsive.size.height * 0.02),
                   _buildTextField("Semestre"),
-                  SizedBox(height: size.height * 0.02),
+                  SizedBox(height: responsive.size.height * 0.02),
                   _buildTextField("Carrera"),
                 ],
 
-                SizedBox(height: size.height * 0.04),
+                SizedBox(height: responsive.size.height * 0.04),
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
@@ -108,8 +103,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     padding: EdgeInsets.symmetric(
-                      vertical: size.height * 0.018,
-                      horizontal: size.width * 0.1,
+                      vertical: responsive.size.height * 0.018,
+                      horizontal: responsive.size.width * 0.1,
                     ),
                   ),
                   child: const Text(

@@ -1,165 +1,139 @@
 import 'package:flutter/material.dart';
-import 'widgets/clase_card.dart';
-import 'theme/app_theme.dart';
-import 'widgets/custom_drawer.dart';
-import 'mostrarclases.dart';
-import 'tituloact.dart'; // Asegúrate de importar la nueva pantalla
+import '../theme/app_theme.dart';
+import '../widgets/custom_drawer.dart';
+import '../Utils/responsive.dart';
 
-class Dashboard extends StatelessWidget {
-  const Dashboard({super.key});
+class DashboardPage extends StatelessWidget {
+  const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final responsive = Responsive(context);
+
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
-        title: const Text("Panel Principal"),
-        iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
-        titleTextStyle: const TextStyle(
-          color: AppTheme.backgroundColor,
-          fontSize: 20,
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              final TextEditingController codigoController =
-                  TextEditingController();
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    title: const Text(
-                      "Unirse a una clase",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          "Ingresa el código de la clase para unirte:",
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: codigoController,
-                          decoration: const InputDecoration(
-                            labelText: "Código de clase",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancelar"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          String codigo = codigoController.text.trim();
-                          if (codigo.isNotEmpty) {
-                            Navigator.pop(context); // Cierra el popup
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Clase se agregó con éxito 🎉"),
-                                backgroundColor: Colors.green,
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            print("Código ingresado: $codigo");
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.secondaryColor,
-                          foregroundColor: AppTheme.backgroundColor,
-                        ),
-                        child: const Text("Unirse"),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            icon: const Icon(Icons.add, color: AppTheme.backgroundColor),
+        title: Text(
+          "Panel principal",
+          style: TextStyle(
+            fontSize: responsive.dp(2.2),
+            color: AppTheme.backgroundColor,
           ),
-        ],
+        ),
       ),
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(responsive.wp(4)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 180,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: AppTheme.claseColors.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 16),
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: 160,
-                    child: ClaseCard(
-                      title: "Clase ${index + 1}",
-                      description: "Descripción de la clase",
-                      color: AppTheme.claseColors[index],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MostrarClasePage(),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
+            Text(
+              "Resumen de actividades",
+              style: TextStyle(
+                fontSize: responsive.dp(2.1),
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor,
               ),
             ),
-            const SizedBox(height: 20),
-            // Llamada a las tarjetas de actividad con la navegación
-            _activityCard(
-              context,
-              "Actividad 1",
-              "Fecha de entrega",
-              "Descripción de la actividad dentro de la clase",
+            SizedBox(height: responsive.hp(2)),
+
+            // Tarjetas horizontales
+            SizedBox(
+              height: responsive.hp(18),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildStatCard(
+                    responsive,
+                    "Total actividades",
+                    "12",
+                    Icons.assignment,
+                    AppTheme.secondaryColor,
+                  ),
+                  SizedBox(width: responsive.wp(4)),
+                  _buildStatCard(
+                    responsive,
+                    "Pendientes",
+                    "4",
+                    Icons.schedule,
+                    Colors.orange,
+                  ),
+                  SizedBox(width: responsive.wp(4)),
+                  _buildStatCard(
+                    responsive,
+                    "Completadas",
+                    "8",
+                    Icons.check_circle,
+                    Colors.green,
+                  ),
+                ],
+              ),
             ),
-            _activityCard(
-              context,
-              "Actividad 2",
-              "Fecha de entrega",
-              "Descripción de la actividad dentro de la clase",
+
+            SizedBox(height: responsive.hp(3)),
+
+            Text(
+              "Actividades recientes",
+              style: TextStyle(
+                fontSize: responsive.dp(2),
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor,
+              ),
             ),
-            _activityCard(
-              context,
-              "Actividad 3",
-              "Fecha de entrega",
-              "Descripción de la actividad dentro de la clase",
-            ),
-            _activityCard(
-              context,
-              "Actividad 4",
-              "Fecha de entrega",
-              "Descripción de la actividad dentro de la clase",
-            ),
-            _activityCard(
-              context,
-              "Actividad 5",
-              "Fecha de entrega",
-              "Descripción de la actividad dentro de la clase",
-            ),
-            _activityCard(
-              context,
-              "Actividad 6",
-              "Fecha de entrega",
-              "Descripción de la actividad dentro de la clase",
+            SizedBox(height: responsive.hp(2)),
+
+            // Lista vertical simulada
+            Column(
+              children: List.generate(4, (index) {
+                return Container(
+                  margin: EdgeInsets.only(bottom: responsive.hp(1.5)),
+                  padding: EdgeInsets.all(responsive.wp(4)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(responsive.dp(1.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: responsive.dp(0.5),
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.bookmark,
+                        color: AppTheme.secondaryColor,
+                        size: responsive.dp(3),
+                      ),
+                      SizedBox(width: responsive.wp(3)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Actividad ${index + 1}",
+                              style: TextStyle(
+                                fontSize: responsive.dp(1.9),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: responsive.hp(0.5)),
+                            Text(
+                              "Descripción breve de la actividad ${index + 1}.",
+                              style: TextStyle(
+                                fontSize: responsive.dp(1.6),
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ),
           ],
         ),
@@ -167,55 +141,43 @@ class Dashboard extends StatelessWidget {
     );
   }
 
-  static Widget _activityCard(
-    BuildContext context,
+  Widget _buildStatCard(
+    Responsive responsive,
     String title,
-    String fecha,
-    String descripcion,
+    String value,
+    IconData icon,
+    Color color,
   ) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ActividadPage()),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.backgroundColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+    return Container(
+      width: responsive.wp(42),
+      padding: EdgeInsets.all(responsive.wp(4)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(responsive.dp(2)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: responsive.dp(4)),
+          SizedBox(height: responsive.hp(1)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: responsive.dp(3),
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.edit, color: AppTheme.primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              ],
+          ),
+          SizedBox(height: responsive.hp(0.5)),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: responsive.dp(1.6),
+              color: Colors.white,
             ),
-            Text(fecha, style: const TextStyle(color: Colors.blue)),
-            const SizedBox(height: 8),
-            Text(descripcion, style: const TextStyle(color: Colors.black54)),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

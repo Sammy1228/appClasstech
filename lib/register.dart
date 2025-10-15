@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../Utils/responsive.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -66,23 +67,7 @@ class _RegisterState extends State<Register> {
 
 @override
 Widget build(BuildContext context) {
-  final size = MediaQuery.of(context).size;
-  final orientation = MediaQuery.of(context).orientation;
-
-  final double screenWidth = size.width;
-  final double screenHeight = size.height;
-
-  final double horizontalPadding =
-      orientation == Orientation.portrait ? screenWidth * 0.08 : screenWidth * 0.2;
-
-  final double verticalPadding =
-      orientation == Orientation.portrait ? screenHeight * 0.05 : screenHeight * 0.08;
-
-  final double titleFontSize =
-      orientation == Orientation.portrait ? screenWidth * 0.13 : screenWidth * 0.08;
-
-  final double fieldSpacing =
-      orientation == Orientation.portrait ? screenHeight * 0.02 : screenHeight * 0.015;
+final responsive = Responsive(context);
 
 return Scaffold(
   backgroundColor: AppTheme.primaryColor,
@@ -94,29 +79,29 @@ return Scaffold(
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: screenHeight * 0.08),
+            SizedBox(height: responsive.screenHeight * 0.08),
 
             //  Título superior
             Center(
               child: Text(
                 "Registro",
                 style: TextStyle(
-                  fontSize: titleFontSize,
+                  fontSize: responsive.titleFontSize,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.backgroundColor,
                 ),
               ),
             ),
 
-            SizedBox(height: screenHeight * 0.04),
+            SizedBox(height: responsive.screenHeight * 0.04),
 
             //  Contenedor blanco del formulario (ocupa el espacio restante)
             Expanded(
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: verticalPadding,
+                  horizontal: responsive.horizontalPadding,
+                  vertical: responsive.verticalPadding,
                 ),
                 decoration: const BoxDecoration(
                   color: AppTheme.backgroundColor,
@@ -129,21 +114,21 @@ return Scaffold(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildTextField("Nombre(s)", _nombreCtrl),
-                        SizedBox(height: fieldSpacing),
+                        SizedBox(height: responsive.fieldSpacing),
                         _buildTextField("Apellidos", _apellidoCtrl),
-                        SizedBox(height: fieldSpacing),
+                        SizedBox(height: responsive.fieldSpacing),
                         _buildTextField("Correo", _correoCtrl,
                             keyboardType: TextInputType.emailAddress),
-                        SizedBox(height: fieldSpacing),
+                        SizedBox(height: responsive.fieldSpacing),
                         _buildTextField("Contraseña", _contrasenaCtrl, obscure: true),
-                        SizedBox(height: fieldSpacing),
+                        SizedBox(height: responsive.fieldSpacing),
                         _buildTextField("Repite la contraseña", _repiteCtrl, obscure: true),
-                        SizedBox(height: fieldSpacing * 1.5),
+                        SizedBox(height: responsive.fieldSpacing * 1.5),
 
                         //  Rol
                         Text(
                           "Rol",
-                          style: TextStyle(fontSize: screenWidth * 0.045),
+                          style: TextStyle(fontSize: responsive.screenWidth * 0.045),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -152,30 +137,30 @@ return Scaffold(
                             _buildRolCheck("Profesor"),
                           ],
                         ),
-                        SizedBox(height: fieldSpacing * 1.5),
+                        SizedBox(height: responsive.fieldSpacing * 1.5),
 
                         // Campos dinámicos según el rol
                         if (_rolSeleccionado == "Estudiante") ...[
                           _buildTextField("Carrera", _carreraCtrl),
-                          SizedBox(height: fieldSpacing),
+                          SizedBox(height: responsive.fieldSpacing),
                           _buildTextField("Semestre", _semestreCtrl),
                         ] else if (_rolSeleccionado == "Profesor") ...[
                           Text(
                             "Instituciones",
-                            style: TextStyle(fontSize: screenWidth * 0.045),
+                            style: TextStyle(fontSize: responsive.screenWidth * 0.045),
                           ),
-                          SizedBox(height: fieldSpacing * 0.5),
+                          SizedBox(height: responsive.fieldSpacing * 0.5),
 
                           //  Lista expandible de instituciones
                           SizedBox(
-                            height: screenHeight * 0.25,
+                            height: responsive.screenHeight * 0.25,
                             child: SizedBox.expand(
                               child: _buildInstitucionesList(
-                                  screenHeight, screenWidth),
+                                  responsive.screenHeight, responsive.screenWidth),
                             ),
                           ),
                         ],
-                        SizedBox(height: fieldSpacing * 1.5),
+                        SizedBox(height: responsive.fieldSpacing * 1.5),
 
                         // Botón de registro
                         ElevatedButton(
@@ -185,19 +170,19 @@ return Scaffold(
                               borderRadius: BorderRadius.circular(30),
                             ),
                             padding: EdgeInsets.symmetric(
-                              vertical: fieldSpacing * 1.2,
+                              vertical: responsive.fieldSpacing * 1.2,
                             ),
                           ),
                           onPressed: _registrar,
                           child: Text(
                             "Registrarme",
                             style: TextStyle(
-                              fontSize: screenWidth * 0.045,
+                              fontSize: responsive.screenWidth * 0.045,
                               color: AppTheme.backgroundColor,
                             ),
                           ),
                         ),
-                        SizedBox(height: fieldSpacing * 1.2),
+                        SizedBox(height: responsive.fieldSpacing * 1.2),
 
                         //  Enlace de inicio de sesión
                         Center(
@@ -208,7 +193,7 @@ return Scaffold(
                                 text: "Ya tienes una cuenta, ",
                                 style: TextStyle(
                                   color: Colors.black54,
-                                  fontSize: screenWidth * 0.04,
+                                  fontSize: responsive.screenWidth * 0.04,
                                 ),
                                 children: [
                                   TextSpan(

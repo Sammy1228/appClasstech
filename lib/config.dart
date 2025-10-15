@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'theme/app_theme.dart';
-import 'widgets/custom_drawer.dart';
+import '../theme/app_theme.dart';
+import '../widgets/custom_drawer.dart';
+import '../Utils/responsive.dart';
 
 class Configuracion extends StatefulWidget {
   const Configuracion({super.key});
@@ -14,10 +15,8 @@ class _ConfiguracionState extends State<Configuracion> {
   final TextEditingController carreraController = TextEditingController();
   final TextEditingController periodoController = TextEditingController();
 
-  // Datos para la tabla
   final List<Map<String, String>> _data = [];
 
-  // 🔹 Modal genérico
   void _showCustomDialog(
     BuildContext context, {
     required String title,
@@ -25,32 +24,30 @@ class _ConfiguracionState extends State<Configuracion> {
     required IconData icon,
     required Color iconColor,
   }) {
+    final responsive = Responsive(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(responsive.dp(2))),
         title: Column(
           children: [
-            Icon(icon, color: iconColor, size: 50),
-            const SizedBox(height: 10),
-            Text(title, textAlign: TextAlign.center),
+            Icon(icon, color: iconColor, size: responsive.dp(6)),
+            SizedBox(height: responsive.hp(1)),
+            Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: responsive.dp(2.2))),
           ],
         ),
-        content: Text(message, textAlign: TextAlign.center),
+        content: Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: responsive.dp(1.8))),
         actions: [
           Center(
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(responsive.dp(3)),
                 ),
               ),
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                "OK",
-                style: TextStyle(color: AppTheme.backgroundColor),
-              ),
+              child: Text("OK", style: TextStyle(color: AppTheme.backgroundColor, fontSize: responsive.dp(1.8))),
             ),
           ),
         ],
@@ -58,46 +55,24 @@ class _ConfiguracionState extends State<Configuracion> {
     );
   }
 
-  // 🔹 Modal con TextFields (para añadir datos a la tabla)
   void _showInputDialog(BuildContext context) {
+    final responsive = Responsive(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Añadir Configuración", textAlign: TextAlign.center),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: semestreController,
-              decoration: InputDecoration(
-                labelText: "Semestre",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: carreraController,
-              decoration: InputDecoration(
-                labelText: "Carrera",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: periodoController,
-              decoration: InputDecoration(
-                labelText: "Periodo",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-          ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(responsive.dp(2))),
+        title: Text("Añadir Configuración", textAlign: TextAlign.center, style: TextStyle(fontSize: responsive.dp(2.2))),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _inputField("Semestre", semestreController, responsive),
+              SizedBox(height: responsive.hp(1.5)),
+              _inputField("Carrera", carreraController, responsive),
+              SizedBox(height: responsive.hp(1.5)),
+              _inputField("Periodo", periodoController, responsive),
+            ],
+          ),
         ),
         actions: [
           Center(
@@ -105,7 +80,7 @@ class _ConfiguracionState extends State<Configuracion> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.secondaryColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(responsive.dp(3)),
                 ),
               ),
               onPressed: () {
@@ -120,7 +95,6 @@ class _ConfiguracionState extends State<Configuracion> {
                 semestreController.clear();
                 carreraController.clear();
                 periodoController.clear();
-
                 Navigator.of(context).pop();
 
                 _showCustomDialog(
@@ -131,10 +105,7 @@ class _ConfiguracionState extends State<Configuracion> {
                   iconColor: Colors.green,
                 );
               },
-              child: const Text(
-                "Añadir",
-                style: TextStyle(color: AppTheme.backgroundColor),
-              ),
+              child: Text("Añadir", style: TextStyle(color: AppTheme.backgroundColor, fontSize: responsive.dp(1.8))),
             ),
           ),
         ],
@@ -142,41 +113,48 @@ class _ConfiguracionState extends State<Configuracion> {
     );
   }
 
+  Widget _inputField(String label, TextEditingController controller, Responsive responsive) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(responsive.dp(2))),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final responsive = Responsive(context);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
-        title: const Text("Configuración"),
+        title: Text("Configuración", style: TextStyle(fontSize: responsive.dp(2.4))),
         iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
-        titleTextStyle: const TextStyle(
-          color: AppTheme.backgroundColor,
-          fontSize: 20,
-        ),
       ),
       drawer: const CustomDrawer(),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(responsive.wp(4)),
         child: Column(
           children: [
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: responsive.hp(2)),
+            Text(
               "Configuración de semestres,\ncarreras y periodos",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: responsive.dp(2.6),
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryColor,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: responsive.hp(2)),
 
-            // Tabla
             Expanded(
               child: Container(
+                padding: EdgeInsets.all(responsive.dp(1.2)),
                 decoration: BoxDecoration(
                   color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(responsive.dp(2)),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.primaryColor.withOpacity(0.2),
@@ -185,47 +163,19 @@ class _ConfiguracionState extends State<Configuracion> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(8),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: DataTableTheme(
-                    data: DataTableThemeData(
-                      headingRowColor: WidgetStateProperty.all(
-                        AppTheme.primaryColor,
-                      ),
-                      headingTextStyle: const TextStyle(
-                        color: AppTheme.backgroundColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      dataRowColor: WidgetStateProperty.all(
-                        AppTheme.backgroundColor,
-                      ),
-                      dividerThickness: 1,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: AppTheme.primaryColor,
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
+                  borderRadius: BorderRadius.circular(responsive.dp(2)),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
                     child: DataTable(
-                      border: TableBorder.all(width: 1),
+                      columnSpacing: responsive.wp(4),
                       columns: const [
                         DataColumn(label: Text("Semestre")),
                         DataColumn(label: Text("Carrera")),
                         DataColumn(label: Text("Periodo")),
                       ],
                       rows: _data.isEmpty
-                          ? const [
-                              DataRow(
-                                cells: [
-                                  DataCell(Text("-")),
-                                  DataCell(Text("-")),
-                                  DataCell(Text("-")),
-                                ],
-                              ),
-                            ]
+                          ? const [DataRow(cells: [DataCell(Text("-")), DataCell(Text("-")), DataCell(Text("-"))])]
                           : _data.map((row) {
                               return DataRow(
                                 cells: [
@@ -240,65 +190,49 @@ class _ConfiguracionState extends State<Configuracion> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: responsive.hp(2)),
 
-            // Botón Añadir Configuración
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(responsive.dp(3)),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.wp(5),
+                  vertical: responsive.hp(1.5),
                 ),
               ),
-              onPressed: () {
-                _showInputDialog(context);
-              },
-              child: const Text("Añadir Configuración"),
+              onPressed: () => _showInputDialog(context),
+              child: Text("Añadir Configuración", style: TextStyle(fontSize: responsive.dp(2), color: Colors.white)),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: responsive.hp(2)),
 
-            // Botón Guardar
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.secondaryColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(responsive.dp(3)),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 14,
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.wp(8),
+                  vertical: responsive.hp(1.5),
                 ),
               ),
               onPressed: () {
                 bool exito = _data.isNotEmpty;
-                if (exito) {
-                  _showCustomDialog(
-                    context,
-                    title: "Datos guardados",
-                    message: "Datos guardados con éxito",
-                    icon: Icons.check_circle,
-                    iconColor: Colors.green,
-                  );
-                } else {
-                  _showCustomDialog(
-                    context,
-                    title: "Error",
-                    message: "Error al guardar la configuración",
-                    icon: Icons.cancel,
-                    iconColor: Colors.red,
-                  );
-                }
+                _showCustomDialog(
+                  context,
+                  title: exito ? "Datos guardados" : "Error",
+                  message: exito
+                      ? "Datos guardados con éxito"
+                      : "Error al guardar la configuración",
+                  icon: exito ? Icons.check_circle : Icons.cancel,
+                  iconColor: exito ? Colors.green : Colors.red,
+                );
               },
-
-              child: const Text(
-                "Guardar",
-                style: TextStyle(fontSize: 16, color: AppTheme.backgroundColor),
-              ),
+              child: Text("Guardar", style: TextStyle(fontSize: responsive.dp(1.8), color: Colors.white)),
             ),
           ],
         ),
