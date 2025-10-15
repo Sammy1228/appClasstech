@@ -1,7 +1,9 @@
 import 'package:appzacek/firebase_options.dart';
+import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:appzacek/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'splash.dart';
 import 'login.dart';
 import 'register.dart';
@@ -24,23 +26,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Classtech',
-      initialRoute: '/Splash',
-      routes: {
-        '/Splash': (context) => const Splash(),
-        '/login': (context) => const Login(),
-        '/register': (context) => const Register(),
-        '/dashboard': (context) => const DashboardPage(),
-        '/config': (context) => const Configuracion(),
-        '/perfil': (context) => const PerfilScreen(tipoUsuario: "profesor"),
-        '/class': (context) => const ClasesScreen(),
-        '/retroalimentacion': (context) => const RetroalimentacionPage(),
-      },
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: AppTheme.primaryColor,
+    return  MultiProvider( 
+      providers: [ 
+        ChangeNotifierProvider(create: (_) => Authentication()), 
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Classtech',
+        initialRoute: '/Splash',
+        routes: {
+          '/Splash': (context) => const Splash(),
+          '/login': (context) => const Login(),
+          '/register': (context) => const Register(),
+          '/dashboard': (context) => const DashboardPage(),
+          '/config': (context) => const Configuracion(),
+          '/perfil': (context) => const PerfilScreen(tipoUsuario: "profesor"),
+          '/class': (context) => const ClasesScreen(),
+          '/retroalimentacion': (context) => const RetroalimentacionPage(),
+        },
+        theme: ThemeData(
+          useMaterial3: true,
+          colorSchemeSeed: AppTheme.primaryColor,
+        ),
       ),
     );
   }

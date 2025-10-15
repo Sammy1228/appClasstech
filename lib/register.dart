@@ -1,4 +1,6 @@
+import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../Utils/responsive.dart';
 
@@ -23,9 +25,10 @@ class _RegisterState extends State<Register> {
   final TextEditingController _repiteCtrl = TextEditingController();
   final TextEditingController _carreraCtrl = TextEditingController();
   final TextEditingController _semestreCtrl = TextEditingController();
- 
+  
+  bool _isLoading = false;
 
- void _agregarInstitucion() {
+  void _agregarInstitucion() {
     final texto = _nuevaInstitucionController.text.trim();
     if (texto.isNotEmpty) {
       setState(() {
@@ -41,7 +44,7 @@ class _RegisterState extends State<Register> {
     });
   }
 
-  void _registrar() {
+  Future<void> _registrar() async {
     if (_formKey.currentState!.validate()) {
       if (_rolSeleccionado == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -57,10 +60,35 @@ class _RegisterState extends State<Register> {
         return;
       }
 
-      //  guardar los datos o enviar al backend
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registro completado como $_rolSeleccionado')),
-      );
+      setState(()=> _isLoading = true);
+
+      final auth = Provider.of<Authentication>(context, listen: false);
+        auth.setNombre = _nombreCtrl.text;
+        auth.setEmail = _correoCtrl.text;
+        auth.setPassword = _contrasenaCtrl.text;
+        auth.setConfirmPassword = _repiteCtrl.text;
+        auth.setTipoUsuario = _rolSeleccionado!;
+        auth.setCarrera = _carreraCtrl.text;
+        auth.setSemestre = _semestreCtrl.text;
+        auth.setInstituciones = institucionesProfesor;
+
+        try {
+          final user = await auth.register();
+          if (user != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("✅ Registro exitoso: ${user.email}")),
+            );
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          }
+        } catch(e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("❌ Error en el registro: $e")),
+          );
+        } finally {
+          setState(() => _isLoading = false);
+        }
+
+      
     }
   }
 
@@ -173,7 +201,7 @@ return Scaffold(
                               vertical: responsive.fieldSpacing * 1.2,
                             ),
                           ),
-                          onPressed: _registrar,
+                          onPressed: _isLoading? null: _registrar,
                           child: Text(
                             "Registrarme",
                             style: TextStyle(
