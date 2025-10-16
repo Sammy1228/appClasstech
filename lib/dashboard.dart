@@ -1,183 +1,227 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../widgets/custom_drawer.dart';
-import '../Utils/responsive.dart';
+import 'widgets/clase_card.dart';
+import 'theme/app_theme.dart';
+import 'widgets/custom_drawer.dart';
+import 'mostrarclases.dart';
+import 'tituloact.dart';
+import 'Utils/responsive.dart';
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class Dashboard extends StatelessWidget {
+  const Dashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
+    final r = Responsive(context);
+
+    // Ajustes base para mantener proporciones similares al diseño original
+    final double basePadding = r.hp(2).clamp(12, 24);
+    final double cardSpacing = r.hp(1.5).clamp(10, 20);
+    final double textSize = r.dp(4).clamp(14, 20);
+    final double titleSize = r.dp(4.5).clamp(16, 22);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
         title: Text(
-          "Panel principal",
+          "Panel Principal",
           style: TextStyle(
-            fontSize: responsive.dp(2.2),
             color: AppTheme.backgroundColor,
+            fontSize: titleSize,
           ),
         ),
-      ),
-      drawer: const CustomDrawer(),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(responsive.wp(4)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Resumen de actividades",
-              style: TextStyle(
-                fontSize: responsive.dp(2.1),
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            SizedBox(height: responsive.hp(2)),
-
-            // Tarjetas horizontales
-            SizedBox(
-              height: responsive.hp(18),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _buildStatCard(
-                    responsive,
-                    "Total actividades",
-                    "12",
-                    Icons.assignment,
-                    AppTheme.secondaryColor,
-                  ),
-                  SizedBox(width: responsive.wp(4)),
-                  _buildStatCard(
-                    responsive,
-                    "Pendientes",
-                    "4",
-                    Icons.schedule,
-                    Colors.orange,
-                  ),
-                  SizedBox(width: responsive.wp(4)),
-                  _buildStatCard(
-                    responsive,
-                    "Completadas",
-                    "8",
-                    Icons.check_circle,
-                    Colors.green,
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: responsive.hp(3)),
-
-            Text(
-              "Actividades recientes",
-              style: TextStyle(
-                fontSize: responsive.dp(2),
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            SizedBox(height: responsive.hp(2)),
-
-            // Lista vertical simulada
-            Column(
-              children: List.generate(4, (index) {
-                return Container(
-                  margin: EdgeInsets.only(bottom: responsive.hp(1.5)),
-                  padding: EdgeInsets.all(responsive.wp(4)),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(responsive.dp(1.5)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: responsive.dp(0.5),
-                        offset: const Offset(0, 2),
+        iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
+        actions: [
+          IconButton(
+            onPressed: () {
+              final TextEditingController codigoController =
+                  TextEditingController();
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  final r2 = Responsive(context);
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    title: Text(
+                      "Unirse a una clase",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                        fontSize: titleSize,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.bookmark,
-                        color: AppTheme.secondaryColor,
-                        size: responsive.dp(3),
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Ingresa el código de la clase para unirte:",
+                          style: TextStyle(fontSize: textSize),
+                        ),
+                        SizedBox(height: basePadding),
+                        TextField(
+                          controller: codigoController,
+                          decoration: const InputDecoration(
+                            labelText: "Código de clase",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          "Cancelar",
+                          style: TextStyle(fontSize: textSize),
+                        ),
                       ),
-                      SizedBox(width: responsive.wp(3)),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Actividad ${index + 1}",
-                              style: TextStyle(
-                                fontSize: responsive.dp(1.9),
-                                fontWeight: FontWeight.w600,
+                      ElevatedButton(
+                        onPressed: () {
+                          String codigo = codigoController.text.trim();
+                          if (codigo.isNotEmpty) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Clase se agregó con éxito 🎉"),
+                                backgroundColor: Colors.green,
+                                duration: Duration(seconds: 2),
                               ),
-                            ),
-                            SizedBox(height: responsive.hp(0.5)),
-                            Text(
-                              "Descripción breve de la actividad ${index + 1}.",
-                              style: TextStyle(
-                                fontSize: responsive.dp(1.6),
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ],
+                            );
+                            print("Código ingresado: $codigo");
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.secondaryColor,
+                          foregroundColor: AppTheme.backgroundColor,
+                        ),
+                        child: Text(
+                          "Unirse",
+                          style: TextStyle(fontSize: textSize),
                         ),
                       ),
                     ],
-                  ),
-                );
-              }),
+                  );
+                },
+              );
+            },
+            icon: const Icon(Icons.add, color: AppTheme.backgroundColor),
+          ),
+        ],
+      ),
+      drawer: const CustomDrawer(),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(basePadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: r.hp(22).clamp(150, 220),
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: AppTheme.claseColors.length,
+                separatorBuilder: (_, __) =>
+                    SizedBox(width: cardSpacing),
+                itemBuilder: (context, index) {
+                  return SizedBox(
+                    width: r.wp(40).clamp(140, 180),
+                    child: ClaseCard(
+                      title: "Clase ${index + 1}",
+                      description: "Descripción de la clase",
+                      color: AppTheme.claseColors[index],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MostrarClasePage(),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
+            SizedBox(height: r.hp(2).clamp(12, 24)),
+            // Actividades
+            for (int i = 1; i <= 6; i++)
+              _activityCard(
+                context,
+                "Actividad $i",
+                "Fecha de entrega",
+                "Descripción de la actividad dentro de la clase",
+                r,
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(
-    Responsive responsive,
+  static Widget _activityCard(
+    BuildContext context,
     String title,
-    String value,
-    IconData icon,
-    Color color,
+    String fecha,
+    String descripcion,
+    Responsive r,
   ) {
-    return Container(
-      width: responsive.wp(42),
-      padding: EdgeInsets.all(responsive.wp(4)),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(responsive.dp(2)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: responsive.dp(4)),
-          SizedBox(height: responsive.hp(1)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: responsive.dp(3),
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    final double innerPadding = r.hp(2).clamp(12, 20);
+    final double textSize = r.dp(3.6).clamp(13, 18);
+    final double iconSize = r.dp(4.8).clamp(20, 26);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ActividadPage()),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: innerPadding),
+        padding: EdgeInsets.all(innerPadding),
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepPurple.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
-          ),
-          SizedBox(height: responsive.hp(0.5)),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: responsive.dp(1.6),
-              color: Colors.white,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.edit,
+                    color: AppTheme.primaryColor, size: iconSize),
+                SizedBox(width: r.wp(2).clamp(8, 16)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: textSize + 2,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            Text(
+              fecha,
+              style: TextStyle(color: Colors.blue, fontSize: textSize - 1),
+            ),
+            SizedBox(height: r.hp(0.8).clamp(6, 10)),
+            Text(
+              descripcion,
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: textSize - 1,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
