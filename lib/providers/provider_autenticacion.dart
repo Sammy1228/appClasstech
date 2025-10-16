@@ -141,6 +141,7 @@ Future<User?> login() async {
 
       if (docProfesor.exists) {
         _tipoUsuario = 'profesor';
+        await cargarDatosProfesor(user.uid);
       } else if (docAlumno.exists) {
         _tipoUsuario = 'alumno';
       } else {
@@ -175,6 +176,12 @@ Future<User?> login() async {
     notifyListeners();
   }
 
-
-
+  Future<void> cargarDatosProfesor(String uid) async {
+    final doc = await FirebaseFirestore.instance.collection('profesores').doc(uid).get();
+    if (doc.exists) {
+      _nombre = doc['nombre'] ?? '';
+      _instituciones = List<String>.from(doc['instituciones'] ?? []);
+      notifyListeners();
+    }
+  }
 }

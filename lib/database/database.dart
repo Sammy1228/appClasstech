@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService{
 
+  //======================= Autenticación =======================
+
   // nuevo profesor (registro)
   Future<void> registroProfesor({
     required String uid,
@@ -37,5 +39,30 @@ class DatabaseService{
       'fechaRegistro': FieldValue.serverTimestamp(),
     });
   }
+
+
+  //======================= Clases =======================
+
+  //Crear clase
+  Future<void> crearClase({
+    required String titulo,
+    required String descripcion,
+    required String nombreProfesor,
+    required String institucion,
+    required String carrera,
+    required String semestre,
+    required String codigoAcceso,
+  }) async {
+    await FirebaseFirestore.instance.collection('clases').add({
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'nombreProfesor': nombreProfesor,
+      'institucion': institucion,
+      'carrera': carrera,
+      'semestre': semestre,
+      'codigoAcceso': codigoAcceso,
+    });
+  }
+
 
 }

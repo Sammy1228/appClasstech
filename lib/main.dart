@@ -1,5 +1,6 @@
 import 'package:appzacek/firebase_options.dart';
 import 'package:appzacek/providers/provider_autenticacion.dart';
+import 'package:appzacek/providers/provider_clases.dart';
 import 'package:appzacek/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
     return  MultiProvider( 
       providers: [ 
         ChangeNotifierProvider(create: (_) => Authentication()), 
+        ChangeNotifierProvider(create: (_) => ProviderClases()), 
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

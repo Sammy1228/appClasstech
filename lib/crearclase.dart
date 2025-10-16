@@ -1,5 +1,8 @@
+import 'package:appzacek/providers/provider_autenticacion.dart';
+import 'package:appzacek/providers/provider_clases.dart';
 import 'package:appzacek/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../Utils/responsive.dart';
 
@@ -19,9 +22,22 @@ class _CrearClasePageState extends State<CrearClasePage> {
     'Otra institución'
   ];
 
+  // Controladores
+  final TextEditingController _tituloCtrl = TextEditingController();
+  final TextEditingController _descripcionCtrl = TextEditingController();
+  final TextEditingController _carreraCtrl = TextEditingController();
+  final TextEditingController _semestreCtrl = TextEditingController();
+  final TextEditingController _codigoCtrl = TextEditingController();
+  final TextEditingController _institucionCtrl = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
+
+    // Obtener el nombre del profesor y sus instituciones desde provider
+    final nombreProfesor = Provider.of<Authentication>(context, listen: false).nombre;
+    final instituciones = Provider.of<Authentication>(context, listen: false).instituciones;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
@@ -38,15 +54,19 @@ class _CrearClasePageState extends State<CrearClasePage> {
             child: Column(
               children: [
                 TextField(
+                  controller: _tituloCtrl,
                   decoration: AppTheme.inputDecoration("Título de la clase"),
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: _descripcionCtrl,
                   decoration: AppTheme.inputDecoration("Descripción"),
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  enabled: false, // Solo lectura
                   decoration: AppTheme.inputDecoration("Nombre de profesor"),
+                  controller: TextEditingController(text: nombreProfesor),
                 ),
                 const SizedBox(height: 12),
 
@@ -72,6 +92,7 @@ class _CrearClasePageState extends State<CrearClasePage> {
                             onChanged: (value) {
                               setState(() {
                                 institucionSeleccionada = value;
+                                _institucionCtrl.text = "";
                               });
                             },
                           ),
@@ -93,14 +114,17 @@ class _CrearClasePageState extends State<CrearClasePage> {
 
                 const SizedBox(height: 12),
                 TextField(
+                  controller: _carreraCtrl,
                   decoration: AppTheme.inputDecoration("Carrera"),
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: _semestreCtrl,
                   decoration: AppTheme.inputDecoration("Semestre"),
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: _codigoCtrl,
                   decoration: AppTheme.inputDecoration("Código"),
                 ),
                 const SizedBox(height: 20),
@@ -112,8 +136,36 @@ class _CrearClasePageState extends State<CrearClasePage> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  onPressed: () {
-                    // Acción al crear clase
+                  onPressed: () async {
+                    final clasesProvider = Provider.of<ProviderClases>(context, listen: false);
+
+                    clasesProvider.setTitulo = _tituloCtrl.text.trim();
+                    clasesProvider.setDescripcion = _descripcionCtrl.text.trim();
+                    clasesProvider.setNombreProfesor = nombreProfesor;
+                    clasesProvider.setInstitucion = institucionSeleccionada ?? _institucionCtrl.text.trim();
+                    clasesProvider.setCarrera = _carreraCtrl.text.trim();
+                    clasesProvider.setSemestre = _semestreCtrl.text.trim();
+                    clasesProvider.setCodigoAcceso = _codigoCtrl.text.trim();
+
+                    try {
+                      await clasesProvider.createClass();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Clase creada exitosamente")),
+                      );
+                      // limpiar campos
+                      _tituloCtrl.clear();
+                      _descripcionCtrl.clear();
+                      _carreraCtrl.clear();
+                      _semestreCtrl.clear();
+                      _codigoCtrl.clear();
+                      setState(() {
+                        institucionSeleccionada = null;
+                      });
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: $e")),
+                      );
+                    }
                   },
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 14),
