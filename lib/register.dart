@@ -64,6 +64,7 @@ class _RegisterState extends State<Register> {
 
       final auth = Provider.of<Authentication>(context, listen: false);
         auth.setNombre = _nombreCtrl.text;
+        auth.setApellidos = _apellidoCtrl.text;
         auth.setEmail = _correoCtrl.text;
         auth.setPassword = _contrasenaCtrl.text;
         auth.setConfirmPassword = _repiteCtrl.text;
@@ -201,7 +202,8 @@ return Scaffold(
                               vertical: responsive.fieldSpacing * 1.2,
                             ),
                           ),
-                          onPressed: _isLoading? null: _registrar,
+                          onPressed: 
+                          _isLoading? null: _registrar,
                           child: Text(
                             "Registrarme",
                             style: TextStyle(

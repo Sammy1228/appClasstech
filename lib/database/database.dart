@@ -8,12 +8,14 @@ class DatabaseService{
   Future<void> registroProfesor({
     required String uid,
     required String nombre,
+    required String apellidos,
     required String email,
     required List<String> instituciones,
   }) async {
     await FirebaseFirestore.instance.collection('profesores').doc(uid).set({
       'uid': uid,
       'nombre': nombre,
+      'apellidos': apellidos,
       'email': email,
       'tipoUsuario': 'profesor',
       'instituciones': instituciones,
@@ -25,6 +27,7 @@ class DatabaseService{
   Future<void> registroAlumno({
     required String uid,
     required String nombre,
+    required String apellidos,
     required String email,
     required String carrera,
     required String semestre
@@ -32,6 +35,7 @@ class DatabaseService{
     await FirebaseFirestore.instance.collection('alumnos').doc(uid).set({
       'uid': uid,
       'nombre': nombre,
+      'apellidos': apellidos,
       'email': email,
       'tipoUsuario': 'alumno', 
       'carrera': carrera,

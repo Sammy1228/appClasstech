@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 class Authentication extends ChangeNotifier{
   bool _isLoggedIn = false;
   String _nombre = "";
+  String _apellidos = "";
   String _email = "";
   String _password = "";
   String _confirmPassword = "";
@@ -16,6 +17,7 @@ class Authentication extends ChangeNotifier{
 
   bool get isLoggedIn => _isLoggedIn;
   String get nombre => _nombre;
+  String get apellidos => _apellidos;
   String get email => _email;
   String get password => _password;
   String get confirmPassword => _confirmPassword;
@@ -26,6 +28,10 @@ class Authentication extends ChangeNotifier{
 
   set setNombre(String nombre){
     _nombre = nombre;
+  }
+
+  set setApellidos(String apellidos){
+    _apellidos = apellidos;
   }
 
   set setEmail(String email){
@@ -79,6 +85,7 @@ class Authentication extends ChangeNotifier{
         await _dbService.registroProfesor(
           uid: user.uid,
           nombre: _nombre,
+          apellidos: _apellidos,
           email: _email,
           instituciones: _instituciones,
         );
@@ -86,6 +93,7 @@ class Authentication extends ChangeNotifier{
         await _dbService.registroAlumno(
           uid: user.uid,
           nombre: _nombre,
+          apellidos: _apellidos,
           email: _email,
           carrera: _carrera,
           semestre: _semestre
