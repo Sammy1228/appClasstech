@@ -82,4 +82,9 @@ class ProviderClases extends ChangeNotifier{
       throw Exception('Error al crear la clase: $e');
     }
   }
+
+  // Obtener clases del profesor actual
+  Future<List<String>> getProfessorClasses(String nombreProfesor) async {
+    return await _dbService.obtenerClasesProfesor(nombreProfesor);
+  } 
 }

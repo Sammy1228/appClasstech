@@ -68,5 +68,35 @@ class DatabaseService{
     });
   }
 
+  // Obtener clases por profesor
+  Future<List<String>> obtenerClasesProfesor(String nombreProfesor) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('clases')
+        .where('nombreProfesor', isEqualTo: nombreProfesor)
+        .get();
 
+    return snapshot.docs.map((doc) => doc['titulo'] as String).toList();
+  }
+
+
+
+  //======================= Actividades =======================
+  
+  //Crear actividad
+  Future<void> crearActividad({
+    required String titulo,
+    required String descripcion,
+    required String url,
+    required String clase,
+  }) async {
+    await FirebaseFirestore.instance.collection('actividades').add({
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'url': url,
+      'clase': clase,
+      'fechaCreacion': FieldValue.serverTimestamp(),
+    });
+  }
+
+  
 }
