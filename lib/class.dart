@@ -1,3 +1,6 @@
+import 'package:appzacek/providers/provider_autenticacion.dart';
+import 'package:provider/provider.dart';
+
 import 'crearclase.dart';
 import 'crearactividad.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +24,7 @@ class ClasesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
     final isPortrait = responsive.isPortrait;
+    final tipoUsuario = Provider.of<Authentication>(context).tipoUsuario;
 
     return Scaffold(
       appBar: AppBar(
@@ -34,51 +38,52 @@ class ClasesScreen extends StatelessWidget {
         backgroundColor: AppTheme.primaryColor,
         iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
         actions: [
-          IconButton(
-            icon: AppTheme.themedIcon(
-              Icons.add,
-              color: AppTheme.backgroundColor,
-              size: responsive.scale(0.08, 0.05),
+          if (tipoUsuario == 'profesor') // Solo profesores ven el botón + para crear classes o actividades
+            IconButton(
+              icon: AppTheme.themedIcon(
+                Icons.add,
+                color: AppTheme.backgroundColor,
+                size: responsive.scale(0.08, 0.05),
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Seleccionar Opción"),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          _dialogButton(
+                            context,
+                            responsive,
+                            "Crear Clase",
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CrearClasePage(),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: responsive.hp(1)),
+                          _dialogButton(
+                            context,
+                            responsive,
+                            "Crear Actividad",
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CrearActividadPage(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text("Seleccionar Opción"),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        _dialogButton(
-                          context,
-                          responsive,
-                          "Crear Clase",
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CrearClasePage(),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: responsive.hp(1)),
-                        _dialogButton(
-                          context,
-                          responsive,
-                          "Crear Actividad",
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CrearActividadPage(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
         ],
       ),
       drawer: const CustomDrawer(),

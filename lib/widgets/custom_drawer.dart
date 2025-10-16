@@ -54,14 +54,13 @@ class CustomDrawer extends StatelessWidget {
                     Navigator.pushReplacementNamed(context, '/config');
                   },
                 ),
-                if (tipoUsuario == 'profesor')
-                  _drawerItem(
-                    icon: Icons.book,
-                    text: "Clases",
-                    onTap: () {
-                      Navigator.pushReplacementNamed(context, '/class');
-                    },
-                  ),
+                _drawerItem(
+                  icon: Icons.book,
+                  text: "Clases",
+                  onTap: () {
+                    Navigator.pushReplacementNamed(context, '/class');
+                  },
+                ),
                 _drawerItem(
                   icon: Icons.feedback,
                   text: "Retroalimentación",

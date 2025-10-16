@@ -1,4 +1,6 @@
+import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import 'widgets/custom_drawer.dart';
 import '../Utils/responsive.dart';
@@ -10,6 +12,7 @@ class ActividadPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
     final width = MediaQuery.of(context).size.width;
+    final tipoUsuario = Provider.of<Authentication>(context).tipoUsuario;
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -28,6 +31,7 @@ class ActividadPage extends StatelessWidget {
           ),
         ),
         actions: [
+          if (tipoUsuario == 'profesor') // Solo profesores ven el botón de eliminar
           IconButton(
             icon: const Icon(Icons.delete, color: AppTheme.backgroundColor),
             onPressed: () {},
