@@ -48,4 +48,14 @@ class Responsive {
   /// Escalado general para texto o elementos
   double scale(double factorPortrait, double factorLandscape) =>
       isPortrait ? screenWidth * factorPortrait : screenHeight * factorLandscape;
+
+      double sp(double percent) {
+    double base = MediaQuery.of(context).size.width < 600 ? 100 : 120;
+    return MediaQuery.of(context).size.width * percent / base;
+  }
+
+  bool get isMobile => MediaQuery.of(context).size.width < 600;
+  bool get isTablet => MediaQuery.of(context).size.width >= 600 && MediaQuery.of(context).size.width < 1024;
+  bool get isDesktop => MediaQuery.of(context).size.width >= 1024;
+      
 }

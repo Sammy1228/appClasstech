@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'widgets/custom_drawer.dart';
+import '../Utils/responsive.dart';
 
 class ActividadPage extends StatelessWidget {
   const ActividadPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final responsive = Responsive(context);
+    final width = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: Colors.grey[200], // Fondo de la pantalla
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
         title: const Text("Título de la actividad"),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           color: AppTheme.backgroundColor,
-          fontSize: 20,
+          // 🔹 Limitamos el tamaño mínimo y máximo del texto
+          fontSize: (responsive.sp(2.5)).clamp(16, 22),
         ),
         leading: Builder(
           builder: (context) => IconButton(
@@ -30,157 +35,200 @@ class ActividadPage extends StatelessWidget {
         ],
       ),
       drawer: const CustomDrawer(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Contenedor de la descripción (rectángulo redondeado)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 39, vertical: 25),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 255, 220, 168),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Fecha de entrega",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Descripción de la actividad:",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et molestie felis. Duis eget urna id odio luctus consequat ut at dui. In scelerisque purus magna. Vestibulum eget erat finibus, vehicula sapien a, sollicitudin velit. Duis tincidunt luctus libero at ultrices. Vivamus congue vitae lectus dignissim accumsan. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur finibus fermentum felis sit amet ullamcorper. Nunc sit amet fringilla orci, vel vehicula sem.",
-                    style: TextStyle(color: Colors.black),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // 🔹 Margen lateral dinámico pero con límite máximo
+          double horizontalPadding = width < 500
+              ? 16
+              : width < 900
+                  ? 40
+                  : 80;
 
-            // Campo de URL del video
-            TextField(
-              decoration: InputDecoration(
-                hintText: "Campo de url del video (solo si se requiere)",
-                hintStyle: const TextStyle(color: Colors.grey),
-                filled: true,
-                fillColor: AppTheme.backgroundColor,
-                contentPadding: const EdgeInsets.symmetric(vertical: 18),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
+          // 🔹 Ancho máximo limitado para evitar márgenes excesivos
+          double maxWidth = width < 900 ? 700 : 900;
 
-            // Contenedor para la subida de archivos
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.primaryColor, width: 1.5),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_upload_outlined,
-                    size: 90,
-                    color: AppTheme.primaryColor,
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Adjunta tus archivos",
-                    style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: responsive.hp(2),
             ),
-            const SizedBox(height: 20),
-
-            // Botón Enviar
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              onPressed: () {},
-              child: const Text(
-                "Enviar",
-                style: TextStyle(color: AppTheme.backgroundColor, fontSize: 18),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Retroalimentación
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    backgroundColor: Color(0xFFE53935),
-                    child: Text(
-                      "D",
-                      style: TextStyle(
-                        color: AppTheme.backgroundColor,
-                        fontSize: 18,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 🟨 Contenedor descripción
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsive.wp(5),
+                        vertical: responsive.hp(3),
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 255, 220, 168),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Fecha de entrega",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                              fontSize: (responsive.sp(2)).clamp(14, 18),
+                            ),
+                          ),
+                          SizedBox(height: responsive.hp(1)),
+                          Text(
+                            "Descripción de la actividad:",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: (responsive.sp(2)).clamp(14, 18),
+                            ),
+                          ),
+                          SizedBox(height: responsive.hp(0.5)),
+                          Text(
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et molestie felis. Duis eget urna id odio luctus consequat ut at dui. In scelerisque purus magna. Vestibulum eget erat finibus, vehicula sapien a, sollicitudin velit. Duis tincidunt luctus libero at ultrices. Vivamus congue vitae lectus dignissim accumsan. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur finibus fermentum felis sit amet ullamcorper. Nunc sit amet fringilla orci, vel vehicula sem.",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: (responsive.sp(1.8)).clamp(13, 17),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Text(
-                      "Retroalimentación del alumno (opcional)",
-                      style: TextStyle(color: Colors.black),
+                    SizedBox(height: responsive.hp(3)),
+
+                    // 🟩 Campo URL
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: "Campo de url del video (solo si se requiere)",
+                        hintStyle: const TextStyle(color: Colors.grey),
+                        filled: true,
+                        fillColor: AppTheme.backgroundColor,
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: responsive.hp(2)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ],
+                    SizedBox(height: responsive.hp(3)),
+
+                    // 🟦 Subida de archivos
+                    Container(
+                      height: responsive.hp(25),
+                      decoration: BoxDecoration(
+                        color: AppTheme.backgroundColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border:
+                            Border.all(color: AppTheme.primaryColor, width: 1.5),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.cloud_upload_outlined,
+                            size: responsive.isMobile
+                                ? responsive.wp(20)
+                                : responsive.wp(10),
+                            color: AppTheme.primaryColor,
+                          ),
+                          SizedBox(height: responsive.hp(1)),
+                          Text(
+                            "Adjunta tus archivos",
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontSize: (responsive.sp(2)).clamp(14, 18),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: responsive.hp(3)),
+
+                    // 🟧 Botón Enviar
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.secondaryColor,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: responsive.wp(10),
+                          vertical: responsive.hp(2),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {},
+                      child: Text(
+                        "Enviar",
+                        style: TextStyle(
+                          color: AppTheme.backgroundColor,
+                          fontSize: (responsive.sp(2.2)).clamp(15, 20),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.hp(3)),
+
+                    // 🟥 Retroalimentación
+                    Container(
+                      padding: EdgeInsets.all(responsive.wp(4)),
+                      decoration: BoxDecoration(
+                        color: AppTheme.backgroundColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: const Color(0xFFE53935),
+                            radius: responsive.wp(5),
+                            child: Text(
+                              "D",
+                              style: TextStyle(
+                                color: AppTheme.backgroundColor,
+                                fontSize: (responsive.sp(2.2)).clamp(14, 18),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: responsive.wp(4)),
+                          Expanded(
+                            child: Text(
+                              "Retroalimentación del alumno (opcional)",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: (responsive.sp(1.9)).clamp(13, 17),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
