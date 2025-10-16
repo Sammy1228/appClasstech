@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 import '../Utils/responsive.dart';
 import '../providers/provider_autenticacion.dart';
@@ -15,6 +16,41 @@ class _LoginState extends State<Login> {
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
   bool _isLoading = false;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  //Método para cargar credenciales guardadas
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('saved_email') ?? '';
+    final savedPassword = prefs.getString('saved_password') ?? '';
+    final remember = prefs.getBool('remember_me') ?? false;
+
+    setState(() {
+      _emailCtrl.text = savedEmail;
+      _passwordCtrl.text = savedPassword;
+      _rememberMe = remember;
+    });
+  }
+
+  //Método para guardar credenciales si el checkbox está seleccionado
+  Future<void> _saveCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setString('saved_email', _emailCtrl.text.trim());
+      await prefs.setString('saved_password', _passwordCtrl.text);
+      await prefs.setBool('remember_me', true);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+      await prefs.setBool('remember_me', false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +119,14 @@ class _LoginState extends State<Login> {
                           SizedBox(height: responsive.screenHeight * 0.015),
                           Row(
                             children: [
-                              Checkbox(value: false, onChanged: (_) {}),
+                              Checkbox(
+                                value: _rememberMe,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _rememberMe = value ?? false;
+                                  });
+                                },
+                              ),
                               Flexible(
                                 child: Text(
                                   "Recuérdame",
@@ -123,6 +166,9 @@ class _LoginState extends State<Login> {
                               auth.setPassword = password;
 
                               setState(() => _isLoading = true);
+
+                              //guardar credenciales si aplica
+                              await _saveCredentials();
 
                               try {
                                 final user = await auth.login(); 
