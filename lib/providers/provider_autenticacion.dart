@@ -11,8 +11,6 @@ class Authentication extends ChangeNotifier{
   String _password = "";
   String _confirmPassword = "";
   String _tipoUsuario = "";
-  String _carrera = "";
-  String _semestre = "";
   List<String> _instituciones = [];
 
   bool get isLoggedIn => _isLoggedIn;
@@ -22,8 +20,6 @@ class Authentication extends ChangeNotifier{
   String get password => _password;
   String get confirmPassword => _confirmPassword;
   String get tipoUsuario => _tipoUsuario;
-  String get carrera => _carrera;
-  String get semestre => _semestre;
   List<String> get instituciones => _instituciones;
 
   set setNombre(String nombre){
@@ -48,14 +44,6 @@ class Authentication extends ChangeNotifier{
 
   set setTipoUsuario(String tipoUsuario){
     _tipoUsuario = tipoUsuario;
-  }
-
-  set setCarrera(String carrera){
-    _carrera = carrera;
-  }
-
-  set setSemestre(String semestre){
-    _semestre = semestre;
   }
 
   set setInstituciones(List<String> instituciones){
@@ -95,8 +83,6 @@ class Authentication extends ChangeNotifier{
           nombre: _nombre,
           apellidos: _apellidos,
           email: _email,
-          carrera: _carrera,
-          semestre: _semestre
         );
       } else{
         throw Exception("Tipo de usuario no válido");

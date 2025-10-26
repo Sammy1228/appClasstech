@@ -28,18 +28,14 @@ class DatabaseService{
     required String uid,
     required String nombre,
     required String apellidos,
-    required String email,
-    required String carrera,
-    required String semestre
+    required String email
   }) async {
     await FirebaseFirestore.instance.collection('alumnos').doc(uid).set({
       'uid': uid,
       'nombre': nombre,
       'apellidos': apellidos,
       'email': email,
-      'tipoUsuario': 'alumno', 
-      'carrera': carrera,
-      'semestre': semestre,
+      'tipoUsuario': 'alumno',
       'fechaRegistro': FieldValue.serverTimestamp(),
     });
   }

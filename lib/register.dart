@@ -23,8 +23,6 @@ class _RegisterState extends State<Register> {
   final TextEditingController _correoCtrl = TextEditingController();
   final TextEditingController _contrasenaCtrl = TextEditingController();
   final TextEditingController _repiteCtrl = TextEditingController();
-  final TextEditingController _carreraCtrl = TextEditingController();
-  final TextEditingController _semestreCtrl = TextEditingController();
   
   bool _isLoading = false;
 
@@ -69,8 +67,6 @@ class _RegisterState extends State<Register> {
         auth.setPassword = _contrasenaCtrl.text;
         auth.setConfirmPassword = _repiteCtrl.text;
         auth.setTipoUsuario = _rolSeleccionado!;
-        auth.setCarrera = _carreraCtrl.text;
-        auth.setSemestre = _semestreCtrl.text;
         auth.setInstituciones = institucionesProfesor;
 
         try {
@@ -169,11 +165,7 @@ return Scaffold(
                         SizedBox(height: responsive.fieldSpacing * 1.5),
 
                         // Campos dinámicos según el rol
-                        if (_rolSeleccionado == "Estudiante") ...[
-                          _buildTextField("Carrera", _carreraCtrl),
-                          SizedBox(height: responsive.fieldSpacing),
-                          _buildTextField("Semestre", _semestreCtrl),
-                        ] else if (_rolSeleccionado == "Profesor") ...[
+                        if (_rolSeleccionado == "Profesor") ...[
                           Text(
                             "Instituciones",
                             style: TextStyle(fontSize: responsive.screenWidth * 0.045),

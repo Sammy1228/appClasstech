@@ -20,8 +20,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _apellidosController = TextEditingController();
   final TextEditingController _correoController = TextEditingController();
-  final TextEditingController _semestreController = TextEditingController();
-  final TextEditingController _carreraController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nuevaInstitucionController =
       TextEditingController();
@@ -40,8 +38,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     _nombreController.dispose();
     _apellidosController.dispose();
     _correoController.dispose();
-    _semestreController.dispose();
-    _carreraController.dispose();
     _passwordController.dispose();
     _nuevaInstitucionController.dispose();
     super.dispose();
@@ -51,8 +47,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     _nombreController.text = auth.nombre;
     _apellidosController.text = auth.apellidos;
     _correoController.text = auth.email;
-    _semestreController.text = auth.semestre;
-    _carreraController.text = auth.carrera;
     _passwordController.text = auth.password;
   }
 
@@ -138,9 +132,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ] else if (auth.tipoUsuario == "alumno") ...[
                   _buildTextField("Correo", _correoController),
                   SizedBox(height: responsive.size.height * 0.02),
-                  _buildTextField("Semestre", _semestreController),
-                  SizedBox(height: responsive.size.height * 0.02),
-                  _buildTextField("Carrera", _carreraController),
                 ],
 
                 SizedBox(height: responsive.size.height * 0.04),
@@ -309,8 +300,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
           'nombre': _nombreController.text,
           'apellidos': _apellidosController.text,
           'email': _correoController.text,
-          'carrera': _carreraController.text,
-          'semestre': _semestreController.text,
         });
       }
 
@@ -323,9 +312,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
           auth
             ..setNombre = doc['nombre'] ?? ''
             ..setApellidos = doc['apellidos'] ?? ''
-            ..setEmail = doc['email'] ?? ''
-            ..setCarrera = doc['carrera'] ?? ''
-            ..setSemestre = doc['semestre'] ?? '';
+            ..setEmail = doc['email'] ?? '';
         }
       }
 
