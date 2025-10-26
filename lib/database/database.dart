@@ -55,6 +55,7 @@ class DatabaseService{
     required String institucion,
     required String carrera,
     required String semestre,
+    required String cicloEscolar,
     required String codigoAcceso,
   }) async {
     await FirebaseFirestore.instance.collection('clases').add({
@@ -64,6 +65,7 @@ class DatabaseService{
       'institucion': institucion,
       'carrera': carrera,
       'semestre': semestre,
+      'cicloEscolar': cicloEscolar,
       'codigoAcceso': codigoAcceso,
     });
   }
@@ -88,13 +90,14 @@ class DatabaseService{
     required String descripcion,
     required String url,
     required String clase,
+    required DateTime? fechaEntrega,
   }) async {
     await FirebaseFirestore.instance.collection('actividades').add({
       'titulo': titulo,
       'descripcion': descripcion,
       'url': url,
       'clase': clase,
-      'fechaCreacion': FieldValue.serverTimestamp(),
+      'fechaEntrega': fechaEntrega
     });
   }
 

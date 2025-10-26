@@ -6,11 +6,13 @@ class ProviderActividades extends ChangeNotifier {
   String _descripcion = "";
   String _url = "";
   String _clase = "";
+  DateTime? _fechaEntrega;
 
   String get titulo => _titulo;
   String get descripcion => _descripcion;
   String get url => _url;
   String get clase => _clase;
+  DateTime? get fechaEntrega => _fechaEntrega;
 
   set setTitulo(String titulo) {
     _titulo = titulo;
@@ -32,6 +34,11 @@ class ProviderActividades extends ChangeNotifier {
     notifyListeners();
   }
 
+  set setFechaEntrega(DateTime? fechaEntrega) {
+    _fechaEntrega = fechaEntrega;
+    notifyListeners();
+  }
+
 
   final DatabaseService _dbService = DatabaseService();
 
@@ -43,6 +50,7 @@ class ProviderActividades extends ChangeNotifier {
         descripcion: _descripcion,
         url: _url,
         clase: _clase,
+        fechaEntrega: _fechaEntrega,
       );
 
       //limpiar campos
@@ -50,6 +58,7 @@ class ProviderActividades extends ChangeNotifier {
       _descripcion = "";
       _url = "";
       _clase = "";
+      _fechaEntrega = null;
       notifyListeners();
     }catch(e){
       throw Exception('Error al crear la actividad: $e');

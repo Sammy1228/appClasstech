@@ -8,6 +8,7 @@ class ProviderClases extends ChangeNotifier{
   String _institucion = "";
   String _carrera = "";
   String _semestre = "";
+  String _cicloEscolar = "";
   String _codigoAcceso = "";
 
 
@@ -17,6 +18,7 @@ class ProviderClases extends ChangeNotifier{
   String get institucion => _institucion;
   String get carrera => _carrera;
   String get semestre => _semestre;
+  String get cicloEscolar => _cicloEscolar;
   String get codigoAcceso => _codigoAcceso;
 
   set setTitulo(String titulo){
@@ -49,6 +51,11 @@ class ProviderClases extends ChangeNotifier{
     notifyListeners();
   }
 
+  set setCicloEscolar(String cicloEscolar){
+    _cicloEscolar = cicloEscolar;
+    notifyListeners();
+  }
+
   set setCodigoAcceso(String codigoAcceso){
     _codigoAcceso = codigoAcceso;
     notifyListeners();
@@ -66,6 +73,7 @@ class ProviderClases extends ChangeNotifier{
         institucion: _institucion,
         carrera: _carrera,
         semestre: _semestre,
+        cicloEscolar: _cicloEscolar,
         codigoAcceso: _codigoAcceso,
       );
 
@@ -76,6 +84,7 @@ class ProviderClases extends ChangeNotifier{
     _institucion = "";
     _carrera = "";
     _semestre = "";
+    _cicloEscolar = "";
     _codigoAcceso = "";
     notifyListeners();
     }catch(e){
