@@ -133,12 +133,13 @@ Future<User?> login() async {
       final docProfesor = results[0];
       final docAlumno = results[1];
 
-      if (docProfesor.exists) {
-        _tipoUsuario = 'profesor';
-        await cargarDatosProfesor(user.uid);
-      } else if (docAlumno.exists) {
-        _tipoUsuario = 'alumno';
-      } else {
+if (docProfesor.exists) {
+  _tipoUsuario = 'profesor';
+  await cargarDatosProfesor(user.uid);
+} else if (docAlumno.exists) {
+  _tipoUsuario = 'alumno';
+  await cargarDatosAlumno(user.uid);
+}else {
         throw Exception("Usuario no encontrado en la base de datos");
       }
 
@@ -174,8 +175,20 @@ Future<User?> login() async {
     final doc = await FirebaseFirestore.instance.collection('profesores').doc(uid).get();
     if (doc.exists) {
       _nombre = doc['nombre'] ?? '';
+      _apellidos = doc['apellidos'] ?? '';
       _instituciones = List<String>.from(doc['instituciones'] ?? []);
+       _email = doc['email'] ?? '';
       notifyListeners();
     }
   }
+
+  Future<void> cargarDatosAlumno(String uid) async {
+  final doc = await FirebaseFirestore.instance.collection('alumnos').doc(uid).get();
+  if (doc.exists) {
+    _nombre = doc['nombre'] ?? '';
+    _apellidos = doc['apellidos'] ?? '';
+    _email = doc['email'] ?? '';
+    notifyListeners();
+  }
+}
 }

@@ -132,6 +132,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ] else if (auth.tipoUsuario == "alumno") ...[
                   _buildTextField("Correo", _correoController),
                   SizedBox(height: responsive.size.height * 0.02),
+                  SizedBox(height: responsive.size.height * 0.02),
+                  _buildTextField("Contraseña", _passwordController,
+                      obscure: true),
                 ],
 
                 SizedBox(height: responsive.size.height * 0.04),
