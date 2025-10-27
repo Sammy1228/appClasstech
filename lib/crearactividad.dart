@@ -19,6 +19,9 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
   final TextEditingController _tituloCtrl = TextEditingController();
   final TextEditingController _descripcionCtrl = TextEditingController();
   final TextEditingController _urlCtrl = TextEditingController();
+  final TextEditingController _fechaEntregaCtrl = TextEditingController();
+  DateTime? fechaEntrega;
+
 
   String? claseSeleccionada;
   List<String> clasesDelProfesor = [];
@@ -75,6 +78,30 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                   decoration: AppTheme.inputDecoration("Url de contenido"),
                 ),
                 const SizedBox(height: 12),
+                TextField(
+                  controller: _fechaEntregaCtrl,
+                  readOnly: true,
+                  decoration: AppTheme.inputDecoration("Fecha de entrega").copyWith(
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: () async {
+                        final DateTime? fechaSeleccionada = await showDatePicker(
+                          context: context,
+                          initialDate: fechaEntrega ?? DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2101),
+                        );
+                        if (fechaSeleccionada != null) {
+                          setState(() {
+                            fechaEntrega = fechaSeleccionada;
+                            _fechaEntregaCtrl.text = "${fechaSeleccionada.day}/${fechaSeleccionada.month}/${fechaSeleccionada.year}";
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 cargandoClases
                     ? const CircularProgressIndicator()
                     : DropdownButtonFormField<String>(
@@ -99,23 +126,35 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                     ),
                   ),
                   onPressed: () async {
+                    if (_tituloCtrl.text.trim().isEmpty || _descripcionCtrl.text.trim().isEmpty || claseSeleccionada == null || fechaEntrega == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Por favor completa todos los campos")),
+                      );
+                      return;
+                    }
+
+
                     final actividadesProvider = Provider.of<ProviderActividades>(context, listen: false);
 
                     actividadesProvider.setTitulo = _tituloCtrl.text.trim();
                     actividadesProvider.setDescripcion = _descripcionCtrl.text.trim();
                     actividadesProvider.setUrl = _urlCtrl.text.trim();
                     actividadesProvider.setClase = claseSeleccionada ?? "";
+                    actividadesProvider.setFechaEntrega = fechaEntrega;
 
                     try {
                       await actividadesProvider.createActivity();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Actividad creada exitosamente")),
                       );
-                      // Limpia los campos del formulario
+
+                      // Limpiar campos - (Luego se va a cambiar a un método)
                       _tituloCtrl.clear();
                       _descripcionCtrl.clear();
                       _urlCtrl.clear();
-                      // Puedes limpiar la selección de clase si lo deseas
+                      _fechaEntregaCtrl.clear();
+                      fechaEntrega = null; 
+
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Error: $e")),
