@@ -1,4 +1,7 @@
+import 'package:appzacek/providers/provider_clases.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'widgets/clase_card.dart';
 import 'theme/app_theme.dart';
 import 'widgets/custom_drawer.dart';
@@ -77,18 +80,43 @@ class Dashboard extends StatelessWidget {
                         ),
                       ),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           String codigo = codigoController.text.trim();
                           if (codigo.isNotEmpty) {
-                            Navigator.pop(context);
+                            final provider = Provider.of<ProviderClases>(context, listen: false);
+
+                            final uidAlumno = FirebaseAuth.instance.currentUser?.uid;
+                            if (uidAlumno == null) return;
+
+                            String resultado = await provider.unirseAClase(codigo, uidAlumno);
+
+                            String mensaje = '';
+                            Color color = Colors.green;
+
+                            switch (resultado) {
+                              case "ok":
+                                mensaje = "Clase agregada con éxito";
+                                break;
+                              case "no_existe":
+                                mensaje = "Código de clase no existe";
+                                color = Colors.red;
+                                break;
+                              case "ya_inscrito":
+                                mensaje = "Ya estás inscrito en esta clase";
+                                color = Colors.orange;
+                                break;
+                              default:
+                                mensaje = "Ocurrió un error";
+                                color = Colors.red;
+                            }
+
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Clase se agregó con éxito 🎉"),
-                                backgroundColor: Colors.green,
-                                duration: Duration(seconds: 2),
+                              SnackBar(
+                                content: Text(mensaje),
+                                backgroundColor: color,
+                                duration: const Duration(seconds: 2),
                               ),
                             );
-                            print("Código ingresado: $codigo");
                           }
                         },
                         style: ElevatedButton.styleFrom(

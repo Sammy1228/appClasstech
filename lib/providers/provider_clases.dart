@@ -1,4 +1,5 @@
 import 'package:appzacek/database/database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ProviderClases extends ChangeNotifier{
@@ -75,6 +76,7 @@ class ProviderClases extends ChangeNotifier{
         semestre: _semestre,
         cicloEscolar: _cicloEscolar,
         codigoAcceso: _codigoAcceso,
+        alumnos: [],
       );
 
       // Limpiar campos
@@ -96,4 +98,15 @@ class ProviderClases extends ChangeNotifier{
   Future<List<String>> getProfessorClasses(String nombreProfesor) async {
     return await _dbService.obtenerClasesProfesor(nombreProfesor);
   } 
+
+  //Uniser a clase
+  Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
+    final resultado = await _dbService.agregarAlumnoAClase(
+      codigoClase: codigoClase,
+      uidAlumno: uidUsuario,
+    );
+    notifyListeners();
+    return resultado;
+  }
+
 }

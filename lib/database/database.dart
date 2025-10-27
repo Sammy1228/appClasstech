@@ -36,6 +36,7 @@ class DatabaseService{
       'apellidos': apellidos,
       'email': email,
       'tipoUsuario': 'alumno',
+      'clases': [],
       'fechaRegistro': FieldValue.serverTimestamp(),
     });
   }
@@ -53,6 +54,7 @@ class DatabaseService{
     required String semestre,
     required String cicloEscolar,
     required String codigoAcceso,
+    required List<String> alumnos,
   }) async {
     await FirebaseFirestore.instance.collection('clases').add({
       'titulo': titulo,
@@ -63,6 +65,7 @@ class DatabaseService{
       'semestre': semestre,
       'cicloEscolar': cicloEscolar,
       'codigoAcceso': codigoAcceso,
+      'alumnos': alumnos,
     });
   }
 
@@ -74,6 +77,48 @@ class DatabaseService{
         .get();
 
     return snapshot.docs.map((doc) => doc['titulo'] as String).toList();
+  }
+
+
+ // Agregar alumno a clase por código de acceso
+  Future<String> agregarAlumnoAClase({
+    required String codigoClase,
+    required String uidAlumno,
+  }) async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('clases')
+          .where('codigoAcceso', isEqualTo: codigoClase)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) return "no_existe";
+
+      final claseDoc = query.docs.first;
+      final claseId = claseDoc.id;
+      final data = claseDoc.data();
+
+      List<dynamic> alumnos = List.from(data['alumnos'] ?? []);
+
+      if (alumnos.contains(uidAlumno)) return "ya_inscrito";
+
+      // Agregar alumno a la clase
+      alumnos.add(uidAlumno);
+      await FirebaseFirestore.instance.collection('clases').doc(claseId).update({
+        'alumnos': alumnos,
+      });
+
+      // Agregar clase al alumno
+      final userRef = FirebaseFirestore.instance.collection('alumnos').doc(uidAlumno);
+      await userRef.set({
+        'clases': FieldValue.arrayUnion([claseId]),
+      }, SetOptions(merge: true));
+
+      return "ok";
+    } catch (e) {
+      print("Error en DatabaseService.agregarAlumnoAClase: $e");
+      return "error";
+    }
   }
 
 
