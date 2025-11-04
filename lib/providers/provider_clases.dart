@@ -109,4 +109,31 @@ class ProviderClases extends ChangeNotifier{
     return resultado;
   }
 
+  Future<void> eliminarClasesPorInstitucion(String institucion) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+
+    // Buscar todas las clases con esa institución
+    final snapshot = await firestore
+        .collection('clases')
+        .where('institucion', isEqualTo: institucion)
+        .get();
+
+    if (snapshot.docs.isEmpty) {
+      debugPrint("No hay clases para eliminar en la institución '$institucion'.");
+      return;
+    }
+
+    // Eliminar todas las clases encontradas
+    for (var doc in snapshot.docs) {
+      await firestore.collection('clases').doc(doc.id).delete();
+    }
+
+    debugPrint("✅ Clases eliminadas correctamente para '$institucion'");
+  } catch (e) {
+    debugPrint("⚠️ Error al eliminar clases de '$institucion': $e");
+    throw Exception("No se pudieron eliminar las clases asociadas a la institución.");
+  }
+}
+
 }

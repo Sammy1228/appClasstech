@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/provider_autenticacion.dart';
+import '../providers/provider_clases.dart';
 import '../widgets/custom_drawer.dart';
 import '../theme/app_theme.dart';
 import '../Utils/responsive.dart';
@@ -26,6 +27,28 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   bool _isSaving = false;
   bool _datosCargados = false;
+
+   @override
+  void initState() {
+    super.initState();
+    _forzarCargaDatos();
+  }
+
+  Future<void> _forzarCargaDatos() async {
+    final auth = Provider.of<Authentication>(context, listen: false);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      if (auth.tipoUsuario == 'profesor') {
+        await auth.cargarDatosProfesor(user.uid);
+      } else if (auth.tipoUsuario == 'alumno') {
+        await auth.cargarDatosAlumno(user.uid);
+      }
+      setState(() {
+        _cargarDatos(auth); // Carga en los controladores
+        _datosCargados = true;
+      });
+    }
+  }
   
   @override
   void didChangeDependencies() {
@@ -218,11 +241,44 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline,
                         color: Colors.redAccent),
-                    onPressed: () {
-                      final updated = List<String>.from(instituciones)
-                        ..removeAt(index);
-                      auth.setInstituciones = updated;
-                    },
+                   onPressed: () async {
+  final confirmar = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Confirmar eliminación'),
+      content: const Text('¿Deseas eliminar esta institución y todas sus clases asociadas?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+      ],
+    ),
+  );
+
+  if (confirmar != true) return; // si cancela, no hace nada
+
+  final providerClases = Provider.of<ProviderClases>(context, listen: false);
+  final institucionEliminada = instituciones[index];
+  final updated = List<String>.from(instituciones)..removeAt(index);
+  auth.setInstituciones = updated;
+
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    await FirebaseFirestore.instance
+        .collection('profesores')
+        .doc(user.uid)
+        .update({'instituciones': updated});
+  }
+
+  await providerClases.eliminarClasesPorInstitucion(institucionEliminada);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text("Institución '$institucionEliminada' y sus clases fueron eliminadas correctamente."),
+      behavior: SnackBarBehavior.floating,
+      duration: Duration(seconds: 3),
+    ),
+  );
+}
                   ),
                 );
               },

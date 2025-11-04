@@ -55,58 +55,64 @@ class Authentication extends ChangeNotifier{
   final DatabaseService _dbService = DatabaseService();
   
   //Registro con correo y contraseña
-  Future<User?> register() async{
-    try{
-      // verificar que las contraseñas coincidan
-      if(_password != _confirmPassword){
-        throw Exception("Las contraseñas no coinciden");
-      }
-
-      //crear usuario
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: _email, password: password);
-
-      final user = credential.user;
-      if(user == null) return null;
-
-      //validar tipo de usuario
-      if(_tipoUsuario.toLowerCase() == 'profesor'){
-        await _dbService.registroProfesor(
-          uid: user.uid,
-          nombre: _nombre,
-          apellidos: _apellidos,
-          email: _email,
-          instituciones: _instituciones,
-        );
-      }else if(_tipoUsuario.toLowerCase() == 'estudiante'){
-        await _dbService.registroAlumno(
-          uid: user.uid,
-          nombre: _nombre,
-          apellidos: _apellidos,
-          email: _email,
-        );
-      } else{
-        throw Exception("Tipo de usuario no válido");
-      }
-
-      //actualizar estado
-      _isLoggedIn = true;
-      notifyListeners();
-      return user;
-
-    } on FirebaseAuthException catch (e) {
-      _isLoggedIn = false;
-      if (e.code == 'weak-password') {
-        throw Exception('La contraseña es demasiado débil.');
-      } else if (e.code == 'email-already-in-use') {
-        throw Exception('El correo ya está en uso.');
-      } else {
-        throw Exception('Error de autenticación: ${e.message}');
-      }
-    } catch (e) {
-      _isLoggedIn = false;
-      return Future.error(e.toString());
+Future<User?> register() async {
+  try {
+    if (_password != _confirmPassword) {
+      throw Exception("Las contraseñas no coinciden");
     }
+
+    final credential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: _email, password: _password);
+
+    final user = credential.user;
+    if (user == null) return null;
+
+    // Guardar datos en Firestore según el tipo
+    if (_tipoUsuario.toLowerCase() == 'profesor') {
+      await _dbService.registroProfesor(
+        uid: user.uid,
+        nombre: _nombre,
+        apellidos: _apellidos,
+        email: _email,
+        instituciones: _instituciones,
+      );
+      // 🔹 Cargar los datos desde Firestore inmediatamente
+      await cargarDatosProfesor(user.uid);
+
+    } else if (_tipoUsuario.toLowerCase() == 'estudiante' ||
+               _tipoUsuario.toLowerCase() == 'alumno') {
+      await _dbService.registroAlumno(
+        uid: user.uid,
+        nombre: _nombre,
+        apellidos: _apellidos,
+        email: _email,
+      );
+      // 🔹 Cargar datos del alumno desde Firestore
+      await cargarDatosAlumno(user.uid);
+
+    } else {
+      throw Exception("Tipo de usuario no válido");
+    }
+
+    _isLoggedIn = true;
+    notifyListeners();
+    return user;
+
+  } on FirebaseAuthException catch (e) {
+    _isLoggedIn = false;
+    if (e.code == 'weak-password') {
+      throw Exception('La contraseña es demasiado débil.');
+    } else if (e.code == 'email-already-in-use') {
+      throw Exception('El correo ya está en uso.');
+    } else {
+      throw Exception('Error de autenticación: ${e.message}');
+    }
+  } catch (e) {
+    _isLoggedIn = false;
+    return Future.error(e.toString());
   }
+}
+
 
 
   //Inicio de sesión 
