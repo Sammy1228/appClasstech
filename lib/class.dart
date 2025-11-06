@@ -1,4 +1,6 @@
 import 'package:appzacek/providers/provider_autenticacion.dart';
+import 'package:appzacek/providers/provider_clases.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
 import 'crearclase.dart';
@@ -8,17 +10,51 @@ import '../widgets/custom_drawer.dart';
 import '../theme/app_theme.dart';
 import '../Utils/responsive.dart';
 
-class ClasesScreen extends StatelessWidget {
+class ClasesScreen extends StatefulWidget {
   const ClasesScreen({super.key});
 
-  final List<Map<String, dynamic>> clases = const [
-    {"title": "Clase 1", "desc": "Descripción de la clase", "color": 0xFFFFE0B2},
-    {"title": "Clase 2", "desc": "Descripción de la clase", "color": 0xFFFFE0B2},
-    {"title": "Clase 3", "desc": "Descripción de la clase", "color": 0xFFFFCDD2},
-    {"title": "Clase 4", "desc": "Descripción de la clase", "color": 0xFFFFCDD2},
-    {"title": "Clase 5", "desc": "Descripción de la clase", "color": 0xFFBBDEFB},
-    {"title": "Clase 6", "desc": "Descripción de la clase", "color": 0xFFBBDEFB},
-  ];
+  @override
+  State<ClasesScreen> createState() => _ClasesScreenState();
+}
+
+class _ClasesScreenState extends State<ClasesScreen> {
+  List<Map<String, dynamic>> clases = [];
+
+  @override
+  void initState() {
+    super.initState();
+    cargarDatos();
+  }
+
+  void cargarDatos() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    try {
+      final snapshot = await Provider.of<ProviderClases>(context, listen: false).obtenerClases();
+      final nuevasClases = <Map<String, dynamic>>[];
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final List<dynamic> alumnos = data['alumnos'] ?? [];
+
+        if (alumnos.contains(user?.uid)) {
+          nuevasClases.add({
+            "title": data['titulo'] ?? 'Sin título',
+            "desc": data['descripcion'] ?? 'Sin descripción',
+            "color": 0xFFBBDEFB,
+          });
+        }
+      }
+
+      setState(() {
+        clases = nuevasClases;
+      });
+
+      print("Clases filtradas: $clases");
+    } catch (e) {
+      print("Error al cargar clases: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +74,7 @@ class ClasesScreen extends StatelessWidget {
         backgroundColor: AppTheme.primaryColor,
         iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
         actions: [
-          if (tipoUsuario == 'profesor') // Solo profesores ven el botón + para crear classes o actividades
+          if (tipoUsuario == 'profesor')
             IconButton(
               icon: AppTheme.themedIcon(
                 Icons.add,
