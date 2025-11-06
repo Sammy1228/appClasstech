@@ -76,8 +76,8 @@ Future<User?> register() async {
         email: _email,
         instituciones: _instituciones,
       );
-      // 🔹 Cargar los datos desde Firestore inmediatamente
       await cargarDatosProfesor(user.uid);
+      _tipoUsuario = 'profesor'; // 🔹 Asegurar que se mantiene
 
     } else if (_tipoUsuario.toLowerCase() == 'estudiante' ||
                _tipoUsuario.toLowerCase() == 'alumno') {
@@ -87,15 +87,15 @@ Future<User?> register() async {
         apellidos: _apellidos,
         email: _email,
       );
-      // 🔹 Cargar datos del alumno desde Firestore
       await cargarDatosAlumno(user.uid);
+      _tipoUsuario = 'alumno'; // 🔹 Asegurar que se mantiene
 
     } else {
       throw Exception("Tipo de usuario no válido");
     }
 
     _isLoggedIn = true;
-    notifyListeners();
+    notifyListeners(); // 🔹 Notificar que el tipo y datos ya están listos
     return user;
 
   } on FirebaseAuthException catch (e) {
