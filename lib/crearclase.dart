@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:appzacek/providers/provider_clases.dart';
 import 'package:appzacek/widgets/custom_drawer.dart';
@@ -16,34 +17,82 @@ class CrearClasePage extends StatefulWidget {
 class _CrearClasePageState extends State<CrearClasePage> {
   final _formKey = GlobalKey<FormState>();
   String? institucionSeleccionada;
-  final List<String> instituciones = [
-    'Instituto Tecnológico Superior de Uruapan',
-    'Universidad Michoacana',
-    'Universidad de Guadalajara',
-    'Otra institución'
-  ];
+  String? carreraSeleccionada;
+  String? semestreSeleccionado;
 
   // Controladores
   final TextEditingController _tituloCtrl = TextEditingController();
   final TextEditingController _descripcionCtrl = TextEditingController();
-  final TextEditingController _carreraCtrl = TextEditingController();
-  final TextEditingController _semestreCtrl = TextEditingController();
-  final TextEditingController _codigoCtrl = TextEditingController();
-  final TextEditingController _institucionCtrl = TextEditingController();
   final TextEditingController _cicloEscolarCtrl = TextEditingController();
+  final TextEditingController _codigoCtrl = TextEditingController();
 
+  // Método para generar un código único (token)
+  String generarCodigoUnico() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    return List.generate(6, (_) => chars[random.nextInt(chars.length)]).join();
+  }
+
+  // Validación genérica
   String? _required(String? value) {
     if (value == null || value.trim().isEmpty) return 'Campo obligatorio.';
     return null;
   }
 
   @override
+  void initState() {
+    super.initState();
+    _codigoCtrl.text = generarCodigoUnico();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
 
-    // Obtener el nombre del profesor y sus instituciones desde provider
-    final nombreProfesor = Provider.of<Authentication>(context, listen: false).nombre;
-    final instituciones = Provider.of<Authentication>(context, listen: false).instituciones;
+    // Obtener nombre del profesor e instituciones desde provider
+    final authProvider = Provider.of<Authentication>(context, listen: false);
+    final nombreProfesor = authProvider.nombre;
+// Convertir la subcolección (List<Map>) a una lista de nombres (List<String>)
+List<String> institucionesDisponibles = authProvider.instituciones
+    .map<String>((inst) {
+        
+      if (inst is Map<String, dynamic>) {
+        final nombre = inst['nombre'];
+        return nombre != null ? nombre.toString() : '';
+      }
+      return '';
+    })
+    .where((s) => s.trim().isNotEmpty)
+    .toList();
+// Si no hay instituciones en el provider, usar fallback
+if (institucionesDisponibles.isEmpty) {
+  institucionesDisponibles = [
+    'Instituto Tecnológico Superior de Uruapan',
+    'Universidad Michoacana',
+    'Universidad de Guadalajara',
+    'Otra institución'
+  ];
+}
+
+    // Listas de opciones para carrera y semestre
+    final List<String> carreras = [
+      'Ingeniería en Sistemas Computacionales',
+      'Ingeniería Industrial',
+      'Licenciatura en Administración',
+      'N/A'
+    ];
+
+    final List<String> semestres = [
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      'N/A'
+    ];
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -76,124 +125,124 @@ class _CrearClasePageState extends State<CrearClasePage> {
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 12),
+
+                  // Nombre del profesor
                   TextField(
                     enabled: false,
-                    decoration: AppTheme.inputDecoration("Nombre de profesor"),
+                    decoration: AppTheme.inputDecoration("Nombre del profesor"),
                     controller: TextEditingController(text: nombreProfesor),
                   ),
                   const SizedBox(height: 12),
 
-                  // Campo desplegable de Institución
-                  InputDecorator(
-                    decoration: AppTheme.inputDecoration("Seleccionar institución"),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              isExpanded: true,
-                              value: institucionSeleccionada,
-                              hint: const Text("Seleccionar institución"),
-                              items: instituciones
-                                  .map(
-                                    (inst) => DropdownMenuItem<String>(
-                                      value: inst,
-                                      child: Text(inst),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  institucionSeleccionada = value;
-                                  _institucionCtrl.text = "";
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                        if (institucionSeleccionada != null)
-                          IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            tooltip: "Borrar selección",
-                            onPressed: () {
-                              setState(() {
-                                institucionSeleccionada = null;
-                              });
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
+                  // Selección de institución
+DropdownButtonFormField<String>(
+  value: institucionSeleccionada,
+  items: institucionesDisponibles
+      .map((inst) => DropdownMenuItem<String>(
+            value: inst,
+            child: Text(inst),
+          ))
+      .toList(),
+  onChanged: (value) {
+    setState(() {
+      institucionSeleccionada = value;
+    });
+  },
+  decoration: AppTheme.inputDecoration("Seleccionar institución"),
+  validator: _required,
+),
 
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _carreraCtrl,
+
+                  // Selección de carrera
+                  DropdownButtonFormField<String>(
+                    value: carreraSeleccionada,
+                    items: carreras
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        carreraSeleccionada = value;
+                      });
+                    },
                     decoration: AppTheme.inputDecoration("Carrera"),
                     validator: _required,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _semestreCtrl,
+
+                  // Selección de semestre
+                  DropdownButtonFormField<String>(
+                    value: semestreSeleccionado,
+                    items: semestres
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        semestreSeleccionado = value;
+                      });
+                    },
                     decoration: AppTheme.inputDecoration("Semestre"),
                     validator: _required,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Ciclo escolar
+                  TextFormField(
+                    controller: _cicloEscolarCtrl,
+                    decoration: AppTheme.inputDecoration("Ciclo Escolar (Ej: Agosto 2024 - Dic 2024)"),
+                    validator: validateCicloEscolar,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                      controller: _cicloEscolarCtrl,
-                      decoration: AppTheme.inputDecoration("Ciclo Escolar (Ej: Agosto 2024 - Dic 2024)"),
-                      validator: validateCicloEscolar,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
+
+                  // Código generado automáticamente
+                  TextField(
+                    enabled: false,
+                    decoration: AppTheme.inputDecoration("Código generado"),
                     controller: _codigoCtrl,
-                    decoration: AppTheme.inputDecoration("Código"),
-                    validator: _required,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 20),
+
+                  // Botón de crear clase
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.secondaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
                     onPressed: () async {
                       if (!_formKey.currentState!.validate()) return;
+
                       final clasesProvider = Provider.of<ProviderClases>(context, listen: false);
+                      final codigoGenerado = _codigoCtrl.text.trim();
 
                       clasesProvider.setTitulo = _tituloCtrl.text.trim();
                       clasesProvider.setDescripcion = _descripcionCtrl.text.trim();
                       clasesProvider.setNombreProfesor = nombreProfesor;
-                      clasesProvider.setInstitucion = institucionSeleccionada ?? _institucionCtrl.text.trim();
-                      clasesProvider.setCarrera = _carreraCtrl.text.trim();
-                      clasesProvider.setSemestre = _semestreCtrl.text.trim();
+                      clasesProvider.setInstitucion = institucionSeleccionada ?? "";
+                      clasesProvider.setCarrera = carreraSeleccionada ?? "";
+                      clasesProvider.setSemestre = semestreSeleccionado ?? "";
                       clasesProvider.setCicloEscolar = _cicloEscolarCtrl.text.trim();
-                      clasesProvider.setCodigoAcceso = _codigoCtrl.text.trim();
+                      clasesProvider.setCodigoAcceso = codigoGenerado;
 
                       try {
                         await clasesProvider.createClass();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Clase creada exitosamente")),
                         );
-                        // limpiar campos
+
+                        // Limpiar campos y regenerar código
                         _tituloCtrl.clear();
                         _descripcionCtrl.clear();
-                        _carreraCtrl.clear();
-                        _semestreCtrl.clear();
-                        _codigoCtrl.clear();
-                        _institucionCtrl.clear();
                         _cicloEscolarCtrl.clear();
-
-                        _formKey.currentState!.reset();
+                        _codigoCtrl.text = generarCodigoUnico();
 
                         setState(() {
                           institucionSeleccionada = null;
-                          
+                          carreraSeleccionada = null;
+                          semestreSeleccionado = null;
                         });
+
+                        _formKey.currentState!.reset();
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Error: $e")),
@@ -202,10 +251,7 @@ class _CrearClasePageState extends State<CrearClasePage> {
                     },
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                      child: Text(
-                        "Crear",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: Text("Crear", style: TextStyle(color: Colors.white)),
                     ),
                   ),
                 ],
@@ -218,6 +264,7 @@ class _CrearClasePageState extends State<CrearClasePage> {
   }
 }
 
+// Validación de ciclo escolar
 String? validateCicloEscolar(String? value) {
   if (value == null || value.trim().isEmpty) {
     return 'El ciclo escolar es obligatorio.';

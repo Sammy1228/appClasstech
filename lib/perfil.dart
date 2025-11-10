@@ -200,133 +200,142 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _buildInstitucionesList(BuildContext context, Authentication auth) {
-    final instituciones = auth.instituciones;
-    return InputDecorator(
-      decoration: AppTheme.inputDecoration("Instituciones registradas"),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              icon: const Icon(Icons.add, color: AppTheme.primaryColor),
-              label: const Text(
-                "Agregar institución",
-                style: TextStyle(color: AppTheme.primaryColor),
-              ),
-              onPressed: () => _mostrarDialogoAgregar(context, auth),
-            ),
+Widget _buildInstitucionesList(BuildContext context, Authentication auth) {
+  final instituciones = auth.instituciones;
+
+  return InputDecorator(
+    decoration: AppTheme.inputDecoration("Instituciones registradas"),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            icon: const Icon(Icons.add, color: AppTheme.primaryColor),
+            label: const Text("Agregar institución",
+                style: TextStyle(color: AppTheme.primaryColor)),
+            onPressed: () => _mostrarDialogoAgregar(context, auth),
           ),
-          const SizedBox(height: 8),
-          if (instituciones.isEmpty)
-            const Text("No hay instituciones registradas",
-                style: TextStyle(color: Colors.grey))
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: instituciones.length,
-              separatorBuilder: (_, __) =>
-                  const Divider(height: 8, color: Colors.grey),
-              itemBuilder: (context, index) {
-                final institucion = instituciones[index];
-                return ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading:
-                      const Icon(Icons.school, color: AppTheme.primaryColor),
-                  title:
-                      Text(institucion, style: const TextStyle(fontSize: 14)),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline,
-                        color: Colors.redAccent),
-                   onPressed: () async {
-  final confirmar = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Confirmar eliminación'),
-      content: const Text('¿Deseas eliminar esta institución y todas sus clases asociadas?'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+        ),
+        const SizedBox(height: 8),
+        if (instituciones.isEmpty)
+          const Text("No hay instituciones registradas",
+              style: TextStyle(color: Colors.grey))
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: instituciones.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 8, color: Colors.grey),
+            itemBuilder: (context, index) {
+              final institucion = instituciones[index];
+              final estado = institucion['estado'];
+              final nombre = institucion['nombre'];
+
+              return ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.school, color: AppTheme.primaryColor),
+                title: Text(
+                  nombre,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: estado == 'inactivo' ? Colors.grey : Colors.black,
+                    decoration: estado == 'inactivo'
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                  ),
+                ),
+                trailing: estado == 'activo'
+                    ? IconButton(
+                        icon: const Icon(Icons.remove_circle_outline,
+                            color: Colors.redAccent),
+                        onPressed: () async {
+                          final confirmar = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Desactivar institución'),
+                              content: const Text(
+                                  '¿Deseas marcar esta institución como inactiva?'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancelar')),
+                                TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text('Aceptar')),
+                              ],
+                            ),
+                          );
+                          if (confirmar == true) {
+                            final user =
+                                FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              await auth.desactivarInstitucion(
+                                  user.uid, institucion['id']);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      "Institución '$nombre' marcada como inactiva."),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      )
+                    : const Icon(Icons.block, color: Colors.grey),
+              );
+            },
+          ),
       ],
     ),
   );
+}
 
-  if (confirmar != true) return; // si cancela, no hace nada
-
-  final providerClases = Provider.of<ProviderClases>(context, listen: false);
-  final institucionEliminada = instituciones[index];
-  final updated = List<String>.from(instituciones)..removeAt(index);
-  auth.setInstituciones = updated;
-
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    await FirebaseFirestore.instance
-        .collection('profesores')
-        .doc(user.uid)
-        .update({'instituciones': updated});
-  }
-
-  await providerClases.eliminarClasesPorInstitucion(institucionEliminada);
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text("Institución '$institucionEliminada' y sus clases fueron eliminadas correctamente."),
-      behavior: SnackBarBehavior.floating,
-      duration: Duration(seconds: 3),
-    ),
+void _mostrarDialogoAgregar(BuildContext context, Authentication auth) {
+  _nuevaInstitucionController.clear();
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Agregar institución"),
+        content: TextField(
+          controller: _nuevaInstitucionController,
+          decoration: const InputDecoration(
+            hintText: "Nombre de la institución",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor),
+            onPressed: () async {
+              final nombre = _nuevaInstitucionController.text.trim();
+              if (nombre.isNotEmpty) {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  await auth.agregarInstitucion(user.uid, nombre);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content:
+                          Text("Institución '$nombre' agregada correctamente.")));
+                }
+              }
+              Navigator.pop(context);
+            },
+            child: const Text("Agregar"),
+          ),
+        ],
+      );
+    },
   );
 }
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _mostrarDialogoAgregar(BuildContext context, Authentication auth) {
-    _nuevaInstitucionController.clear();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Agregar institución"),
-          content: TextField(
-            controller: _nuevaInstitucionController,
-            decoration: const InputDecoration(
-              hintText: "Nombre de la institución",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-              onPressed: () {
-                final nueva = _nuevaInstitucionController.text.trim();
-                if (nueva.isNotEmpty) {
-                  final updated = List<String>.from(auth.instituciones)
-                    ..add(nueva);
-                  auth.setInstituciones = updated;
-                }
-                Navigator.pop(context);
-              },
-              child: const Text("Agregar"),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Future<void> _guardarCambios(Authentication auth) async {
     try {

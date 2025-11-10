@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class Authentication extends ChangeNotifier{
+class Authentication extends ChangeNotifier {
   bool _isLoggedIn = false;
   String _nombre = "";
   String _apellidos = "";
@@ -11,7 +11,7 @@ class Authentication extends ChangeNotifier{
   String _password = "";
   String _confirmPassword = "";
   String _tipoUsuario = "";
-  List<String> _instituciones = [];
+  List<Map<String, dynamic>> _instituciones = []; // ← cambia a lista de mapas
 
   bool get isLoggedIn => _isLoggedIn;
   String get nombre => _nombre;
@@ -20,82 +20,92 @@ class Authentication extends ChangeNotifier{
   String get password => _password;
   String get confirmPassword => _confirmPassword;
   String get tipoUsuario => _tipoUsuario;
-  List<String> get instituciones => _instituciones;
+  List<Map<String, dynamic>> get instituciones => _instituciones;
 
-  set setNombre(String nombre){
-    _nombre = nombre;
-  }
+  set setNombre(String nombre) => _nombre = nombre;
+  set setApellidos(String apellidos) => _apellidos = apellidos;
+  set setEmail(String email) => _email = email;
+  set setPassword(String password) => _password = password;
+  set setConfirmPassword(String confirmPassword) => _confirmPassword = confirmPassword;
+  set setTipoUsuario(String tipoUsuario) => _tipoUsuario = tipoUsuario;
 
-  set setApellidos(String apellidos){
-    _apellidos = apellidos;
-  }
-
-  set setEmail(String email){
-    _email = email;
-  }
-
-  set setPassword(String password){
-    _password = password;
-  }
-
-  set setConfirmPassword(String confirmPassword){
-    _confirmPassword = confirmPassword;
-  }
-
-  set setTipoUsuario(String tipoUsuario){
-    _tipoUsuario = tipoUsuario;
-  }
-
-  set setInstituciones(List<String> instituciones){
+  set setInstituciones(List<Map<String, dynamic>> instituciones) {
     _instituciones = instituciones;
     notifyListeners();
   }
 
-
   final DatabaseService _dbService = DatabaseService();
-  
-  //Registro con correo y contraseña
+
+  // Registro con correo y contraseña
 Future<User?> register() async {
   try {
     if (_password != _confirmPassword) {
       throw Exception("Las contraseñas no coinciden");
     }
 
+    // 🔹 Crear usuario en Firebase Authentication
     final credential = await FirebaseAuth.instance
         .createUserWithEmailAndPassword(email: _email, password: _password);
 
     final user = credential.user;
-    if (user == null) return null;
+    if (user == null) throw Exception("Error al crear la cuenta");
 
-    // Guardar datos en Firestore según el tipo
+    // 🔹 Si el usuario es profesor
     if (_tipoUsuario.toLowerCase() == 'profesor') {
-      await _dbService.registroProfesor(
-        uid: user.uid,
-        nombre: _nombre,
-        apellidos: _apellidos,
-        email: _email,
-        instituciones: _instituciones,
-      );
+      // 🔸 Procesamos las instituciones
+      final instituciones = _instituciones.map((inst) {
+        if (inst is Map<String, dynamic>) return inst['nombre'] ?? '';
+        if (inst is String) return inst;
+        return '';
+      }).where((s) => s.trim().isNotEmpty).toList();
+
+      // 🔹 Crear documento principal del profesor SIN el campo de instituciones
+      await FirebaseFirestore.instance.collection('profesores').doc(user.uid).set({
+        'nombre': _nombre,
+        'apellidos': _apellidos,
+        'email': _email,
+        'tipoUsuario': _tipoUsuario,
+      });
+
+      // 🔹 Crear subcolección "instituciones" (una por una)
+      final institucionesRef = FirebaseFirestore.instance
+          .collection('profesores')
+          .doc(user.uid)
+          .collection('instituciones');
+
+      for (final nombre in instituciones) {
+        await institucionesRef.add({
+          'nombre': nombre,
+          'estado': 'activo',
+        });
+      }
+
+      // 🔹 Cargar datos del profesor recién creado
       await cargarDatosProfesor(user.uid);
-      _tipoUsuario = 'profesor'; // 🔹 Asegurar que se mantiene
+      _tipoUsuario = 'profesor';
+    }
 
-    } else if (_tipoUsuario.toLowerCase() == 'estudiante' ||
-               _tipoUsuario.toLowerCase() == 'alumno') {
-      await _dbService.registroAlumno(
-        uid: user.uid,
-        nombre: _nombre,
-        apellidos: _apellidos,
-        email: _email,
-      );
+    // 🔹 Si el usuario es alumno
+    else if (_tipoUsuario.toLowerCase() == 'alumno' ||
+        _tipoUsuario.toLowerCase() == 'estudiante') {
+      await FirebaseFirestore.instance.collection('alumnos').doc(user.uid).set({
+        'nombre': _nombre,
+        'apellidos': _apellidos,
+        'email': _email,
+        'tipoUsuario': _tipoUsuario,
+      });
+
       await cargarDatosAlumno(user.uid);
-      _tipoUsuario = 'alumno'; // 🔹 Asegurar que se mantiene
+      _tipoUsuario = 'alumno';
+    }
 
-    } else {
+    // 🔹 Si el tipo de usuario no es válido
+    else {
       throw Exception("Tipo de usuario no válido");
     }
 
     _isLoggedIn = true;
-    notifyListeners(); // 🔹 Notificar que el tipo y datos ya están listos
+    notifyListeners();
     return user;
 
   } on FirebaseAuthException catch (e) {
@@ -109,92 +119,115 @@ Future<User?> register() async {
     }
   } catch (e) {
     _isLoggedIn = false;
-    return Future.error(e.toString());
+    return Future.error("Error en el registro: $e");
   }
 }
 
 
 
-  //Inicio de sesión 
-Future<User?> login() async {
+  // Inicio de sesión
+  Future<User?> login() async {
     try {
-      print("Intentando iniciar sesión con $_email");
-      _tipoUsuario = ''; // limpiar tipo antes del intento
-
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _email.trim(),
         password: _password,
       );
 
       final user = credential.user;
-      print("Usuario obtenido: $user");
       if (user == null) throw Exception("Correo o contraseña incorrectos");
 
-      // Buscar tipo de usuario en Firestore
-      final results = await Future.wait([
-        FirebaseFirestore.instance.collection('profesores').doc(user.uid).get(),
-        FirebaseFirestore.instance.collection('alumnos').doc(user.uid).get(),
-      ]);
+      final docProfesor =
+          await FirebaseFirestore.instance.collection('profesores').doc(user.uid).get();
+      final docAlumno =
+          await FirebaseFirestore.instance.collection('alumnos').doc(user.uid).get();
 
-      final docProfesor = results[0];
-      final docAlumno = results[1];
-
-if (docProfesor.exists) {
-  _tipoUsuario = 'profesor';
-  await cargarDatosProfesor(user.uid);
-} else if (docAlumno.exists) {
-  _tipoUsuario = 'alumno';
-  await cargarDatosAlumno(user.uid);
-}else {
+      if (docProfesor.exists) {
+        _tipoUsuario = 'profesor';
+        await cargarDatosProfesor(user.uid);
+      } else if (docAlumno.exists) {
+        _tipoUsuario = 'alumno';
+        await cargarDatosAlumno(user.uid);
+      } else {
         throw Exception("Usuario no encontrado en la base de datos");
       }
 
       _isLoggedIn = true;
       notifyListeners();
       return user;
-    } on FirebaseAuthException catch (e) {
-      _isLoggedIn = false;
-      _tipoUsuario = ''; // limpiar al fallar
-      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
-        throw Exception("Correo o contraseña incorrectos");
-      } else {
-        throw Exception("Error de autenticación: ${e.message}");
-      }
     } catch (e) {
       _isLoggedIn = false;
       _tipoUsuario = '';
-      throw Exception("Error de autenticación: ${e.toString()}"); // <-- Lanza la excepción
+      throw Exception("Error al iniciar sesión: $e");
     }
   }
 
-
-
-  // cerrar sesión
-  Future<void> logout() async{
+  Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
     _isLoggedIn = false;
     _tipoUsuario = '';
     notifyListeners();
   }
 
+  /// 🔹 Cargar datos de profesor y sus instituciones (solo activas o todas)
   Future<void> cargarDatosProfesor(String uid) async {
-    final doc = await FirebaseFirestore.instance.collection('profesores').doc(uid).get();
+    final docRef = FirebaseFirestore.instance.collection('profesores').doc(uid);
+    final doc = await docRef.get();
+
     if (doc.exists) {
       _nombre = doc['nombre'] ?? '';
       _apellidos = doc['apellidos'] ?? '';
-      _instituciones = List<String>.from(doc['instituciones'] ?? []);
-       _email = doc['email'] ?? '';
+      _email = doc['email'] ?? '';
+
+      // cargar subcolección de instituciones
+      final snapshot = await docRef.collection('instituciones').get();
+      _instituciones = snapshot.docs.map((d) {
+        return {
+          'id': d.id,
+          'nombre': d['nombre'],
+          'estado': d['estado'],
+        };
+      }).toList();
+
       notifyListeners();
     }
   }
 
   Future<void> cargarDatosAlumno(String uid) async {
-  final doc = await FirebaseFirestore.instance.collection('alumnos').doc(uid).get();
-  if (doc.exists) {
-    _nombre = doc['nombre'] ?? '';
-    _apellidos = doc['apellidos'] ?? '';
-    _email = doc['email'] ?? '';
+    final doc = await FirebaseFirestore.instance.collection('alumnos').doc(uid).get();
+    if (doc.exists) {
+      _nombre = doc['nombre'] ?? '';
+      _apellidos = doc['apellidos'] ?? '';
+      _email = doc['email'] ?? '';
+      notifyListeners();
+    }
+  }
+
+  /// 🔹 Agregar nueva institución
+  Future<void> agregarInstitucion(String uid, String nombre) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('profesores')
+        .doc(uid)
+        .collection('instituciones')
+        .doc();
+
+    await docRef.set({'nombre': nombre, 'estado': 'activo'});
+
+    _instituciones.add({'id': docRef.id, 'nombre': nombre, 'estado': 'activo'});
     notifyListeners();
   }
-}
+
+  /// 🔹 Marcar institución como inactiva
+  Future<void> desactivarInstitucion(String uid, String id) async {
+    final instRef = FirebaseFirestore.instance
+        .collection('profesores')
+        .doc(uid)
+        .collection('instituciones')
+        .doc(id);
+
+    await instRef.update({'estado': 'inactivo'});
+
+    final index = _instituciones.indexWhere((i) => i['id'] == id);
+    if (index != -1) _instituciones[index]['estado'] = 'inactivo';
+    notifyListeners();
+  }
 }
