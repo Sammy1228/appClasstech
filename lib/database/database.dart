@@ -54,6 +54,7 @@ class DatabaseService{
     required String semestre,
     required String cicloEscolar,
     required String codigoAcceso,
+    required String uidProfesor,
     required List<String> alumnos,
   }) async {
     await FirebaseFirestore.instance.collection('clases').add({
@@ -65,6 +66,7 @@ class DatabaseService{
       'semestre': semestre,
       'cicloEscolar': cicloEscolar,
       'codigoAcceso': codigoAcceso,
+      'uidProfesor': uidProfesor,
       'alumnos': alumnos,
     });
   }

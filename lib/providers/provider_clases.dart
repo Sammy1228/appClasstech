@@ -2,7 +2,8 @@ import 'package:appzacek/database/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class ProviderClases extends ChangeNotifier{
+
+class ProviderClases extends ChangeNotifier {
   String _titulo = "";
   String _descripcion = "";
   String _nombreProfesor = "";
@@ -11,8 +12,9 @@ class ProviderClases extends ChangeNotifier{
   String _semestre = "";
   String _cicloEscolar = "";
   String _codigoAcceso = "";
+  String _uidProfesor = ""; // ✅ Nuevo campo
 
-
+  // Getters
   String get titulo => _titulo;
   String get descripcion => _descripcion;
   String get nombreProfesor => _nombreProfesor;
@@ -21,52 +23,59 @@ class ProviderClases extends ChangeNotifier{
   String get semestre => _semestre;
   String get cicloEscolar => _cicloEscolar;
   String get codigoAcceso => _codigoAcceso;
+  String get uidProfesor => _uidProfesor; // ✅ Getter
 
-  set setTitulo(String titulo){
+  // Setters
+  set setTitulo(String titulo) {
     _titulo = titulo;
     notifyListeners();
   }
 
-  set setDescripcion(String descripcion){
+  set setDescripcion(String descripcion) {
     _descripcion = descripcion;
     notifyListeners();
   }
 
-  set setNombreProfesor(String nombreProfesor){
+  set setNombreProfesor(String nombreProfesor) {
     _nombreProfesor = nombreProfesor;
     notifyListeners();
   }
 
-  set setInstitucion(String institucion){
+  set setInstitucion(String institucion) {
     _institucion = institucion;
     notifyListeners();
   }
 
-  set setCarrera(String carrera){
+  set setCarrera(String carrera) {
     _carrera = carrera;
     notifyListeners();
   }
 
-  set setSemestre(String semestre){
+  set setSemestre(String semestre) {
     _semestre = semestre;
     notifyListeners();
   }
 
-  set setCicloEscolar(String cicloEscolar){
+  set setCicloEscolar(String cicloEscolar) {
     _cicloEscolar = cicloEscolar;
     notifyListeners();
   }
 
-  set setCodigoAcceso(String codigoAcceso){
+  set setCodigoAcceso(String codigoAcceso) {
     _codigoAcceso = codigoAcceso;
     notifyListeners();
   }
 
+  set setUidProfesor(String uid) {
+    _uidProfesor = uid;
+    notifyListeners();
+  }
+
   final DatabaseService _dbService = DatabaseService();
-  
-  //Crear clase
-  Future<void> createClass() async{
-    try{
+
+  // Crear clase
+  Future<void> createClass() async {
+    try {
       await _dbService.crearClase(
         titulo: _titulo,
         descripcion: _descripcion,
@@ -76,20 +85,22 @@ class ProviderClases extends ChangeNotifier{
         semestre: _semestre,
         cicloEscolar: _cicloEscolar,
         codigoAcceso: _codigoAcceso,
+        uidProfesor: _uidProfesor, // ✅ Se envía el UID del profesor
         alumnos: [],
       );
 
       // Limpiar campos
-    _titulo = "";
-    _descripcion = "";
-    _nombreProfesor = "";
-    _institucion = "";
-    _carrera = "";
-    _semestre = "";
-    _cicloEscolar = "";
-    _codigoAcceso = "";
-    notifyListeners();
-    }catch(e){
+      _titulo = "";
+      _descripcion = "";
+      _nombreProfesor = "";
+      _institucion = "";
+      _carrera = "";
+      _semestre = "";
+      _cicloEscolar = "";
+      _codigoAcceso = "";
+      _uidProfesor = "";
+      notifyListeners();
+    } catch (e) {
       throw Exception('Error al crear la clase: $e');
     }
   }
@@ -97,9 +108,9 @@ class ProviderClases extends ChangeNotifier{
   // Obtener clases del profesor actual
   Future<List<String>> getProfessorClasses(String nombreProfesor) async {
     return await _dbService.obtenerClasesProfesor(nombreProfesor);
-  } 
+  }
 
-  //Uniser a clase
+  // Unirse a clase
   Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
     final resultado = await _dbService.agregarAlumnoAClase(
       codigoClase: codigoClase,
@@ -113,7 +124,6 @@ class ProviderClases extends ChangeNotifier{
     try {
       final firestore = FirebaseFirestore.instance;
 
-      // Buscar todas las clases con esa institución
       final snapshot = await firestore
           .collection('clases')
           .where('institucion', isEqualTo: institucion)
@@ -124,7 +134,6 @@ class ProviderClases extends ChangeNotifier{
         return;
       }
 
-      // Eliminar todas las clases encontradas
       for (var doc in snapshot.docs) {
         await firestore.collection('clases').doc(doc.id).delete();
       }
@@ -139,13 +148,7 @@ class ProviderClases extends ChangeNotifier{
   Future<QuerySnapshot> obtenerClases() async {
     try {
       final firestore = FirebaseFirestore.instance;
-
-      final snapshot = await firestore
-          .collection('clases')
-          .get();
-
-      return snapshot;
-
+      return await firestore.collection('clases').get();
     } catch (e) {
       debugPrint("⚠️ Error al obtener las clases!!!: $e");
       throw Exception("No se pudieron obtener las clases!!!.");

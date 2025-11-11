@@ -26,35 +26,49 @@ class _ClasesScreenState extends State<ClasesScreen> {
     cargarDatos();
   }
 
-  void cargarDatos() async {
-    final user = FirebaseAuth.instance.currentUser;
+void cargarDatos() async {
+  final user = FirebaseAuth.instance.currentUser;
+  final tipoUsuario = Provider.of<Authentication>(context, listen: false).tipoUsuario;
 
-    try {
-      final snapshot = await Provider.of<ProviderClases>(context, listen: false).obtenerClases();
-      final nuevasClases = <Map<String, dynamic>>[];
+  try {
+    final snapshot = await Provider.of<ProviderClases>(context, listen: false).obtenerClases();
+    final nuevasClases = <Map<String, dynamic>>[];
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final List<dynamic> alumnos = data['alumnos'] ?? [];
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final List<dynamic> alumnos = data['alumnos'] ?? [];
 
+      if (tipoUsuario == "alumno") {
+        // ✅ Si es alumno, mostrar clases en las que esté inscrito
         if (alumnos.contains(user?.uid)) {
           nuevasClases.add({
             "title": data['titulo'] ?? 'Sin título',
             "desc": data['descripcion'] ?? 'Sin descripción',
-            "color": 0xFFBBDEFB,
+            "color": 0xFFBBDEFB, // azul
+          });
+        }
+      } else if (tipoUsuario == "profesor") {
+        // ✅ Si es profesor, mostrar clases creadas por él
+        if (data['uidProfesor'] == user?.uid) {
+          nuevasClases.add({
+            "title": data['titulo'] ?? 'Sin título',
+            "desc": data['descripcion'] ?? 'Sin descripción',
+            "color": 0xFFC8E6C9, // verde claro
           });
         }
       }
-
-      setState(() {
-        clases = nuevasClases;
-      });
-
-      print("Clases filtradas: $clases");
-    } catch (e) {
-      print("Error al cargar clases: $e");
     }
+
+    setState(() {
+      clases = nuevasClases;
+    });
+
+    print("✅ Clases cargadas para $tipoUsuario: $clases");
+  } catch (e) {
+    print("❌ Error al cargar clases: $e");
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:appzacek/providers/provider_clases.dart';
 import 'package:appzacek/widgets/custom_drawer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
@@ -254,8 +255,11 @@ class _CrearClasePageState extends State<CrearClasePage> {
                       clasesProvider.setCicloEscolar =
                           _cicloEscolarCtrl.text.trim();
                       clasesProvider.setCodigoAcceso = codigoGenerado;
+                      clasesProvider.setUidProfesor = FirebaseAuth.instance.currentUser!.uid; // ✅ Aquí
 
                       try {
+                        clasesProvider.setUidProfesor = FirebaseAuth.instance.currentUser!.uid;
+                        
                         await clasesProvider.createClass();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
