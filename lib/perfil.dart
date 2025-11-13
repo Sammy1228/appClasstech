@@ -233,61 +233,80 @@ Widget _buildInstitucionesList(BuildContext context, Authentication auth) {
               final estado = institucion['estado'];
               final nombre = institucion['nombre'];
 
-              return ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.school, color: AppTheme.primaryColor),
-                title: Text(
-                  nombre,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: estado == 'inactivo' ? Colors.grey : Colors.black,
-                    decoration: estado == 'inactivo'
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
-                  ),
-                ),
-                trailing: estado == 'activo'
-                    ? IconButton(
-                        icon: const Icon(Icons.remove_circle_outline,
-                            color: Colors.redAccent),
-                        onPressed: () async {
-                          final confirmar = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Desactivar institución'),
-                              content: const Text(
-                                  '¿Deseas marcar esta institución como inactiva?'),
-                              actions: [
-                                TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('Cancelar')),
-                                TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: const Text('Aceptar')),
-                              ],
-                            ),
-                          );
-                          if (confirmar == true) {
-                            final user =
-                                FirebaseAuth.instance.currentUser;
-                            if (user != null) {
-                              await auth.desactivarInstitucion(
-                                  user.uid, institucion['id']);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "Institución '$nombre' marcada como inactiva."),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                      )
-                    : const Icon(Icons.block, color: Colors.grey),
-              );
+return ListTile(
+  dense: true,
+  contentPadding: EdgeInsets.zero,
+  leading: const Icon(Icons.school, color: AppTheme.primaryColor),
+  title: Text(
+    nombre,
+    style: TextStyle(
+      fontSize: 14,
+      color: estado == 'inactivo' ? Colors.grey : Colors.black,
+      decoration: estado == 'inactivo'
+          ? TextDecoration.lineThrough
+          : TextDecoration.none,
+    ),
+  ),
+  trailing: estado == 'activo'
+      ? IconButton(
+          icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
+          onPressed: () async {
+            final confirmar = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Desactivar institución'),
+                content: const Text('¿Deseas marcar esta institución como inactiva?'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancelar')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Aceptar')),
+                ],
+              ),
+            );
+            if (confirmar == true) {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                await auth.desactivarInstitucion(user.uid, institucion['id']);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Institución '$nombre' marcada como inactiva.")),
+                );
+              }
+            }
+          },
+        )
+      : IconButton(
+          icon: const Icon(Icons.autorenew, color: Colors.green),
+          onPressed: () async {
+            final confirmar = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Activar institución'),
+                content: const Text('¿Deseas volver a activar esta institución?'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancelar')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Aceptar')),
+                ],
+              ),
+            );
+            if (confirmar == true) {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                await auth.activarInstitucion(user.uid, institucion['id']);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Institución '$nombre' activada correctamente.")),
+                );
+              }
+            }
+          },
+        ),
+);
             },
           ),
       ],

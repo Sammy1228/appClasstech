@@ -217,17 +217,54 @@ Future<User?> register() async {
   }
 
   /// 🔹 Marcar institución como inactiva
-  Future<void> desactivarInstitucion(String uid, String id) async {
-    final instRef = FirebaseFirestore.instance
-        .collection('profesores')
-        .doc(uid)
-        .collection('instituciones')
-        .doc(id);
+ Future<void> desactivarInstitucion(String uidProfesor, String idInstitucion) async {
+  final firestore = FirebaseFirestore.instance;
+  final refInstitucion = firestore
+      .collection('profesores')
+      .doc(uidProfesor)
+      .collection('instituciones')
+      .doc(idInstitucion);
 
-    await instRef.update({'estado': 'inactivo'});
+  // 🔸 Cambia estado en la subcolección
+  await refInstitucion.update({'estado': 'inactivo'});
 
-    final index = _instituciones.indexWhere((i) => i['id'] == id);
-    if (index != -1) _instituciones[index]['estado'] = 'inactivo';
-    notifyListeners();
+  // 🔸 También actualiza el array local
+  for (var inst in instituciones) {
+    if (inst['id'] == idInstitucion) {
+      inst['estado'] = 'inactivo';
+    }
   }
+
+  // 🔸 Cambiar estado de las clases de ese profesor en esa institución
+  final clases = await firestore
+      .collection('clases')
+      .where('uidProfesor', isEqualTo: uidProfesor)
+      .where('institucion', isEqualTo: await refInstitucion.get().then((d) => d['nombre']))
+      .get();
+
+  for (var doc in clases.docs) {
+    await firestore.collection('clases').doc(doc.id).update({'estado': 'inactivo'});
+  }
+
+  notifyListeners();
+}
+
+Future<void> activarInstitucion(String uidProfesor, String idInstitucion) async {
+  final firestore = FirebaseFirestore.instance;
+  final refInstitucion = firestore
+      .collection('profesores')
+      .doc(uidProfesor)
+      .collection('instituciones')
+      .doc(idInstitucion);
+
+  await refInstitucion.update({'estado': 'activo'});
+
+  for (var inst in instituciones) {
+    if (inst['id'] == idInstitucion) {
+      inst['estado'] = 'activo';
+    }
+  }
+
+  notifyListeners();
+}
 }

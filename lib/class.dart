@@ -169,50 +169,110 @@ class _ClasesScreenState extends State<ClasesScreen> {
     );
   }
 
-  Widget _claseCard(Map<String, dynamic> clase, String tipoUsuario) {
-    final provider = Provider.of<ProviderClases>(context, listen: false);
+Widget _claseCard(Map<String, dynamic> clase, String tipoUsuario) {
+  final provider = Provider.of<ProviderClases>(context, listen: false);
+  final index = clases.indexOf(clase);
 
-    return Card(
-      color: Color(clase["color"]),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+  // Color base (si está inactiva, será gris)
+  final baseColor = clase["estado"] == "inactivo"
+      ? Colors.grey
+      : AppTheme.claseColors[index % AppTheme.claseColors.length];
+
+  // Función para oscurecer el color de la franja superior
+  Color darken(Color c, [double amount = 0.1]) {
+    final hsl = HSLColor.fromColor(c);
+    final hslDark = hsl.withLightness(
+      (hsl.lightness - amount).clamp(0.0, 1.0),
+    );
+    return hslDark.toColor();
+  }
+
+  return Container(
+    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+    decoration: BoxDecoration(
+      color: baseColor,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: const [
+        BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 4)),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Encabezado con color más oscuro e ícono
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: darken(baseColor, 0.08),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Row(
+            children: [
+              AppTheme.themedIcon(Icons.book, color: Colors.white, size: 32),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  clase["title"] ?? 'Sin título',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Descripción
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            clase["desc"] ?? 'Sin descripción',
+            style: const TextStyle(fontSize: 15, color: Colors.black87),
+          ),
+        ),
+
+        // Si es profesor, mostrar switch de estado
+        if (tipoUsuario == "profesor")
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            decoration: BoxDecoration(
+              color: darken(baseColor, 0.05),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(20)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(clase["title"],
-                    style:
-                        const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Text(clase["desc"], style: const TextStyle(fontSize: 13)),
+                Text(
+                  clase["estado"] == "activo"
+                      ? "Desactivar clase"
+                      : "Activar clase",
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                ),
+                Switch(
+                  value: clase["estado"] == "activo",
+                  onChanged: (value) async {
+                    final nuevoEstado = value ? "activo" : "inactivo";
+                    await provider.cambiarEstadoClase(clase["id"], nuevoEstado);
+                    cargarDatos(); // recarga la lista de clases
+                  },
+                  activeColor: Colors.white,
+                  inactiveThumbColor: Colors.white54,
+                  inactiveTrackColor: Colors.black26,
+                ),
               ],
             ),
-            if (tipoUsuario == "profesor")
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-    clase["estado"] == "activo"
-        ? "Desactivar clase" // Si está 'activo', la acción será 'Desactivar'
-        : "Volver a activar clase", // Si está 'inactivo', la acción será 'Volver a activar'
-  ),
-                  Switch(
-                    value: clase["estado"] == "activo",
-                    onChanged: (value) async {
-                      final nuevoEstado = value ? "activo" : "inactivo";
-                      await provider.cambiarEstadoClase(clase["id"], nuevoEstado);
-                      cargarDatos();
-                    },
-                  ),
-                ],
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+          ),
+      ],
+    ),
+  );
+}
+
+
+
 
   Widget _dialogButton(
     BuildContext context,

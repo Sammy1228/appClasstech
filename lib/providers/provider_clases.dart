@@ -113,15 +113,34 @@ final DatabaseService _dbService = DatabaseService();
   }
 
   // Unirse a clase
-  Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
-    final resultado = await _dbService.agregarAlumnoAClase(
-      codigoClase: codigoClase,
-      uidAlumno: uidUsuario,
-    );
-    notifyListeners();
-    return resultado;
+Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
+  final firestore = FirebaseFirestore.instance;
+
+  // Buscar clase por código
+  final snapshot = await firestore
+      .collection('clases')
+      .where('codigoAcceso', isEqualTo: codigoClase)
+      .limit(1)
+      .get();
+
+  if (snapshot.docs.isEmpty) {
+    return "Clase no encontrada.";
   }
 
+  final clase = snapshot.docs.first.data();
+
+  if (clase['estado'] == 'inactivo') {
+    return "clase_inactiva";
+  }
+
+  final resultado = await _dbService.agregarAlumnoAClase(
+    codigoClase: codigoClase,
+    uidAlumno: uidUsuario,
+  );
+
+  notifyListeners();
+  return resultado;
+}
   
 
   Future<void> eliminarClasesPorInstitucion(String institucion) async {

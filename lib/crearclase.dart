@@ -53,15 +53,11 @@ class _CrearClasePageState extends State<CrearClasePage> {
 
     final authProvider = Provider.of<Authentication>(context, listen: false);
     final nombreProfesor = authProvider.nombre;
-
-    List<String> institucionesDisponibles = authProvider.instituciones
-        .map<String>((inst) {
-      if (inst is Map<String, dynamic>) {
-        final nombre = inst['nombre'];
-        return nombre != null ? nombre.toString() : '';
-      }
-      return '';
-    }).where((s) => s.trim().isNotEmpty).toList();
+List<String> institucionesDisponibles = authProvider.instituciones
+    .where((inst) => inst['estado'] == 'activo') // ✅ solo activas
+    .map<String>((inst) => inst['nombre']?.toString() ?? '')
+    .where((nombre) => nombre.trim().isNotEmpty)
+    .toList();
 
     if (institucionesDisponibles.isEmpty) {
       institucionesDisponibles = [

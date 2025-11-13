@@ -166,6 +166,10 @@ class _DashboardState extends State<Dashboard> {
                                   mensaje = "Ya estás inscrito en esta clase";
                                   color = Colors.orange;
                                   break;
+                                  case "clase_inactiva":
+                                  mensaje = "Esta clase está inactiva y no puedes unirte.";
+                                  color = Colors.orange;
+                                  break;
                                 default:
                                   mensaje = "Ocurrió un error";
                                   color = Colors.red;
