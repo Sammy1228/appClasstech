@@ -178,7 +178,6 @@ class ProviderClases extends ChangeNotifier {
     }
   }
 
-  // 👇 --- MÉTODO NUEVO EN TIEMPO REAL --- 👇
   Stream<QuerySnapshot> obtenerClasesStream() {
     try {
       final firestore = FirebaseFirestore.instance;
@@ -187,6 +186,18 @@ class ProviderClases extends ChangeNotifier {
     } catch (e) {
       debugPrint("⚠️ Error al obtener stream de clases: $e");
       throw Exception("No se pudo obtener el stream de clases.");
+    }
+  }
+
+  // 👇 --- MÉTODO NUEVO --- 👇
+  // Obtiene el stream de UN SOLO documento de clase
+  Stream<DocumentSnapshot> obtenerClaseStreamPorId(String claseId) {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      return firestore.collection('clases').doc(claseId).snapshots();
+    } catch (e) {
+      debugPrint("⚠️ Error al obtener stream de la clase $claseId: $e");
+      throw Exception("No se pudo obtener el stream de la clase.");
     }
   }
 

@@ -1,5 +1,5 @@
 import 'package:appzacek/database/database.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Importado
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ProviderActividades extends ChangeNotifier {
@@ -65,7 +65,6 @@ class ProviderActividades extends ChangeNotifier {
     }
   }
 
-  // 👇 --- MÉTODO NUEVO EN TIEMPO REAL --- 👇
   Stream<QuerySnapshot> obtenerActividadesStream() {
     try {
       final firestore = FirebaseFirestore.instance;
@@ -74,6 +73,33 @@ class ProviderActividades extends ChangeNotifier {
     } catch (e) {
       debugPrint("⚠️ Error al obtener stream de actividades: $e");
       throw Exception("No se pudo obtener el stream de actividades.");
+    }
+  }
+
+  // 👇 --- MÉTODO NUEVO --- 👇
+  // Obtiene stream de actividades filtradas por el nombre de la clase
+  Stream<QuerySnapshot> obtenerActividadesStreamPorClase(String nombreClase) {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      return firestore
+          .collection('actividades')
+          .where('clase', isEqualTo: nombreClase)
+          .snapshots();
+    } catch (e) {
+      debugPrint("⚠️ Error al obtener stream de actividades por clase: $e");
+      throw Exception("No se pudo obtener el stream de actividades.");
+    }
+  }
+
+  // 👇 --- MÉTODO NUEVO --- 👇
+  // Obtiene el stream de UN SOLO documento de actividad
+  Stream<DocumentSnapshot> obtenerActividadStreamPorId(String actividadId) {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      return firestore.collection('actividades').doc(actividadId).snapshots();
+    } catch (e) {
+      debugPrint("⚠️ Error al obtener stream de la actividad $actividadId: $e");
+      throw Exception("No se pudo obtener el stream de la actividad.");
     }
   }
 }

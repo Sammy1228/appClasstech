@@ -8,9 +8,10 @@ import 'package:provider/provider.dart';
 import 'widgets/clase_card.dart';
 import 'theme/app_theme.dart';
 import 'widgets/custom_drawer.dart';
-import 'mostrarclases.dart';
-import 'tituloact.dart';
+import 'mostrarclases.dart'; // Importado
+import 'tituloact.dart' hide ActividadPage;
 import 'Utils/responsive.dart';
+import 'actividad.dart'; // Importado
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -147,16 +148,16 @@ class _DashboardState extends State<Dashboard> {
                                   color = Colors.red;
                               }
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(mensaje),
-                                  backgroundColor: color,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-
-                              Navigator.pop(context);
-                              // Ya no se necesita cargarClases() manualmente
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(mensaje),
+                                    backgroundColor: color,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                                Navigator.pop(context);
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -212,17 +213,19 @@ class _DashboardState extends State<Dashboard> {
             if (tipoUsuario == "alumno") {
               if (estado == "activo" && alumnos.contains(user?.uid)) {
                 nuevasClases.add({
-                  "id": doc.id,
+                  "id": doc.id, // Se añade el ID
                   "title": data['titulo'] ?? 'Sin título',
                   "desc": data['descripcion'] ?? 'Sin descripción',
+                  ...data, // Se añaden todos los datos por si acaso
                 });
               }
             } else if (tipoUsuario == "profesor") {
               if (data['uidProfesor'] == user?.uid && estado == "activo") {
                 nuevasClases.add({
-                  "id": doc.id,
+                  "id": doc.id, // Se añade el ID
                   "title": data['titulo'] ?? 'Sin título',
                   "desc": data['descripcion'] ?? 'Sin descripción',
+                  ...data, // Se añaden todos los datos
                 });
               }
             }
@@ -258,11 +261,13 @@ class _DashboardState extends State<Dashboard> {
                             description: clase["desc"],
                             color: color,
                             onTap: () {
+                              // 👇 --- MODIFICACIÓN AQUÍ --- 👇
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
+                                  // Pasa el ID de la clase
                                   builder: (context) =>
-                                      const MostrarClasePage(),
+                                      MostrarClasePage(claseId: clase["id"]),
                                 ),
                               );
                             },
@@ -349,7 +354,7 @@ class _DashboardState extends State<Dashboard> {
                               "Entrega: ${fecha.day}/${fecha.month}/${fecha.year}";
                         }
                         nuevasActividades.add({
-                          "id": doc.id,
+                          "id": doc.id, // Se añade el ID
                           "title": data['titulo'] ?? 'Sin título',
                           "desc": data['descripcion'] ?? 'Sin descripción',
                           "fecha": fechaFormateada,
@@ -375,12 +380,25 @@ class _DashboardState extends State<Dashboard> {
 
                     return Column(
                       children: nuevasActividades.map((actividad) {
-                        return _activityCard(
-                          context,
-                          actividad["title"]!,
-                          actividad["fecha"]!,
-                          actividad["desc"]!,
-                          r,
+                        // 👇 --- MODIFICACIÓN AQUÍ --- 👇
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                // Pasa el ID de la actividad
+                                builder: (context) =>
+                                    ActividadPage(actividadId: actividad["id"]),
+                              ),
+                            );
+                          },
+                          child: _activityCard(
+                            context,
+                            actividad["title"]!,
+                            actividad["fecha"]!,
+                            actividad["desc"]!,
+                            r,
+                          ),
                         );
                       }).toList(),
                     );
@@ -405,55 +423,50 @@ class _DashboardState extends State<Dashboard> {
     final double textSize = r.dp(3.6).clamp(13, 18);
     final double iconSize = r.dp(4.8).clamp(20, 26);
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ActividadPage()),
-        );
-      },
-      child: Container(
-        margin: EdgeInsets.only(bottom: innerPadding),
-        padding: EdgeInsets.all(innerPadding),
-        decoration: BoxDecoration(
-          color: AppTheme.backgroundColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.edit, color: AppTheme.primaryColor, size: iconSize),
-                SizedBox(width: r.wp(2).clamp(8, 16)),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: textSize + 2,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
+    return Container(
+      // Se quita el GestureDetector de aquí
+      margin: EdgeInsets.only(bottom: innerPadding),
+      padding: EdgeInsets.all(innerPadding),
+      decoration: BoxDecoration(
+        color: AppTheme.backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepPurple.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.edit, color: AppTheme.primaryColor, size: iconSize),
+              SizedBox(width: r.wp(2).clamp(8, 16)),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: textSize + 2,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
                 ),
-              ],
-            ),
-            Text(
-              fecha,
-              style: TextStyle(color: Colors.blue, fontSize: textSize - 1),
-            ),
-            SizedBox(height: r.hp(0.8).clamp(6, 10)),
-            Text(
-              descripcion,
-              style: TextStyle(color: Colors.black54, fontSize: textSize - 1),
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          Text(
+            fecha,
+            style: TextStyle(color: Colors.blue, fontSize: textSize - 1),
+          ),
+          SizedBox(height: r.hp(0.8).clamp(6, 10)),
+          Text(
+            descripcion,
+            style: TextStyle(color: Colors.black54, fontSize: textSize - 1),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
