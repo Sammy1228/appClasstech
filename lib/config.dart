@@ -1,8 +1,12 @@
+import 'package:appzacek/providers/provider_autenticacion.dart';
+import 'package:appzacek/theme/app_theme.dart';
+import 'package:appzacek/widgets/custom_drawer.dart';
+import 'package:appzacek/Utils/responsive.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'theme/app_theme.dart';
-import 'widgets/custom_drawer.dart';
-import 'Utils/responsive.dart';
-
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 class Configuracion extends StatefulWidget {
   const Configuracion({super.key});
 
@@ -11,352 +15,475 @@ class Configuracion extends StatefulWidget {
 }
 
 class _ConfiguracionState extends State<Configuracion> {
-  final TextEditingController semestreController = TextEditingController();
-  final TextEditingController carreraController = TextEditingController();
-  final TextEditingController periodoController = TextEditingController();
+  
+   final FirebaseFirestore _fire = FirebaseFirestore.instance;
 
-  final List<Map<String, String>> _data = [];
+  bool _loading = true;
+  bool _isProfessor = false;
 
-  // 🔹 Modal genérico
-  void _showCustomDialog(
-    BuildContext context, {
-    required String title,
-    required String message,
-    required IconData icon,
-    required Color iconColor,
-  }) {
-    final r = Responsive(context);
-    final double iconSize = r.dp(12).clamp(40, 60);
-    final double fontSize = r.dp(4).clamp(14, 18);
+  // Datos maestros
+  List<Map<String, dynamic>> _misClases = []; // cada item: {id, titulo, institucion, carrera, semestre, ciclo, estado}
+  List<String> _instituciones = [];
+  List<String> _carreras = [];
+  List<String> _semestres = [];
+  List<String> _ciclos = [];
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Column(
-          children: [
-            Icon(icon, color: iconColor, size: iconSize),
-            SizedBox(height: r.hp(1.5).clamp(8, 14)),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: fontSize - 2),
-        ),
-        actions: [
-          Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: r.wp(8).clamp(20, 40),
-                  vertical: r.hp(1.2).clamp(8, 14),
-                ),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                "OK",
-                style: TextStyle(
-                  color: AppTheme.backgroundColor,
-                  fontSize: fontSize - 2,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  // Filtros
+  String? _filtroClaseId;
+  String? _filtroInstitucion;
+  String? _filtroCarrera;
+  String? _filtroSemestre;
+  String? _filtroCiclo;
+  String _busqueda = '';
+
+  // Tabla alumnos
+  List<Map<String, dynamic>> _alumnos = []; // cada item: {uid, nombre, apellidos, email}
+  int _totalAlumnos = 0;
+
+  // Paginación simple
+  int _rowsPerPage = 10;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initLoad());
   }
 
-  // 🔹 Modal con TextFields (para añadir datos a la tabla)
-  void _showInputDialog(BuildContext context) {
-    final r = Responsive(context);
-    final double spacing = r.hp(1.5).clamp(8, 14);
-    final double fontSize = r.dp(3.8).clamp(14, 18);
+  Future<void> _initLoad() async {
+    final auth = Provider.of<Authentication>(context, listen: false);
+    setState(() => _loading = true);
+    try {
+      _isProfessor = auth.tipoUsuario == 'profesor';
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          "Añadir Configuración",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: fontSize + 2,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: semestreController,
-              decoration: InputDecoration(
-                labelText: "Semestre",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-            SizedBox(height: spacing),
-            TextField(
-              controller: carreraController,
-              decoration: InputDecoration(
-                labelText: "Carrera",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-            SizedBox(height: spacing),
-            TextField(
-              controller: periodoController,
-              decoration: InputDecoration(
-                labelText: "Periodo",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: r.wp(10).clamp(24, 40),
-                  vertical: r.hp(1.5).clamp(10, 14),
-                ),
-              ),
-              onPressed: () {
-                setState(() {
-                  _data.add({
-                    "semestre": semestreController.text,
-                    "carrera": carreraController.text,
-                    "periodo": periodoController.text,
-                  });
-                });
+      if (!_isProfessor) {
+        // No es profesor — no cargamos datos
+        setState(() => _loading = false);
+        return;
+      }
 
-                semestreController.clear();
-                carreraController.clear();
-                periodoController.clear();
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) throw Exception('Usuario no autenticado');
 
-                Navigator.of(context).pop();
+      // Obtener las clases del profesor (solo activas por defecto)
+final q = await _fire
+  .collection('clases')
+  .where('uidProfesor', isEqualTo: uid)
+  .get();
 
-                _showCustomDialog(
-                  context,
-                  title: "Éxito",
-                  message: "Datos añadidos con éxito",
-                  icon: Icons.check_circle,
-                  iconColor: Colors.green,
-                );
-              },
-              child: Text(
-                "Añadir",
-                style: TextStyle(
-                  color: AppTheme.backgroundColor,
-                  fontSize: fontSize - 1,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+// 🔹 Ordenamos manualmente por fecha de creación (descendente)
+final docs = q.docs;
+docs.sort((a, b) {
+  final fechaA = (a['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime(0);
+  final fechaB = (b['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime(0);
+  return fechaB.compareTo(fechaA); // orden descendente
+});
+
+final clases = docs.map((d) {
+  final data = d.data();
+  return {
+    'id': d.id,
+    'titulo': data['titulo'] ?? 'Sin título',
+    'descripcion': data['descripcion'] ?? 'Sin descripción',
+    'institucion': data['institucion'] ?? 'Sin institución',
+    'carrera': data['carrera'] ?? 'Sin carrera',
+    'semestre': data['semestre'] ?? 'Sin semestre',
+    'ciclo': data['cicloEscolar'] ?? 'Sin ciclo',
+    'estado': data['estado'] ?? 'activo',
+    'fechaCreacion': (data['fechaCreacion'] is Timestamp)
+        ? (data['fechaCreacion'] as Timestamp).toDate()
+        : DateTime.fromMillisecondsSinceEpoch(0),
+  };
+}).toList();
+
+// 🔹 Asignar correctamente la lista
+_misClases = clases;
+
+// 🔹 Llenar listas de filtros (únicos)
+_instituciones = _misClases.map((c) => c['institucion'] as String).toSet().toList();
+_carreras = _misClases.map((c) => c['carrera'] as String).toSet().toList();
+_semestres = _misClases.map((c) => c['semestre'] as String).toSet().toList();
+_ciclos = _misClases.map((c) => c['ciclo'] as String).toSet().toList();
+
+      // Estadísticas iniciales
+      _totalAlumnos = 0;
+      // por defecto seleccionar la primera clase activa si existe
+      final primeraActiva = _misClases.firstWhere(
+          (c) => c['estado'] == 'activo',
+          orElse: () => ( _misClases.isNotEmpty ? _misClases.first : {}));
+      if (primeraActiva != null && primeraActiva.isNotEmpty) {
+        _filtroClaseId = primeraActiva['id'] as String?;
+      }
+
+      // Cargar alumnos para la clase seleccionada (si hay)
+      if (_filtroClaseId != null) {
+        await _cargarAlumnosDeClase(_filtroClaseId!);
+      } else {
+        _alumnos = [];
+      }
+    } catch (e, s) {
+      debugPrint('Error initLoad ControlAlumnos: $e\n$s');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar datos: $e')),
+      );
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _cargarAlumnosDeClase(String claseId) async {
+    setState(() {
+      _loading = true;
+      _alumnos = [];
+      _currentPage = 0;
+    });
+
+    try {
+      final doc = await _fire.collection('clases').doc(claseId).get();
+      if (!doc.exists) {
+        setState(() {
+          _alumnos = [];
+          _totalAlumnos = 0;
+          _loading = false;
+        });
+        return;
+      }
+
+      final data = doc.data()!;
+      final List<dynamic> alumnosUids = List<dynamic>.from(data['alumnos'] ?? []);
+      _totalAlumnos = alumnosUids.length;
+
+      // Cargar datos de cada alumno (paralelo)
+      final futures = alumnosUids.map((uid) => _fire.collection('alumnos').doc(uid.toString()).get());
+      final snapshots = await Future.wait(futures);
+
+      final alumnosFull = <Map<String, dynamic>>[];
+      for (final s in snapshots) {
+        if (!s.exists) continue;
+        final d = s.data()!;
+        alumnosFull.add({
+          'uid': s.id,
+          'nombre': d['nombre'] ?? '',
+          'apellidos': d['apellidos'] ?? '',
+          'email': d['email'] ?? '',
+        });
+      }
+
+      // Aplicar busqueda local (nombre, apellidos, email)
+      final filtered = _aplicarBusquedaYFiltrosALumnos(alumnosFull);
+
+      setState(() {
+        _alumnos = filtered;
+        _totalAlumnos = alumnosFull.length;
+      });
+    } catch (e, s) {
+      debugPrint('Error cargarAlumnosDeClase: $e\n$s');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar alumnos: $e')),
+      );
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _aplicarBusquedaYFiltrosALumnos(List<Map<String, dynamic>> source) {
+    final q = _busqueda.trim().toLowerCase();
+    return source.where((a) {
+      if (q.isNotEmpty) {
+        final match = (a['nombre'] as String).toLowerCase().contains(q) ||
+            (a['apellidos'] as String).toLowerCase().contains(q) ||
+            (a['email'] as String).toLowerCase().contains(q);
+        return match;
+      }
+      return true;
+    }).toList();
+  }
+
+  // Aplicar filtros sobre las clases (no sobre alumnos)
+  List<Map<String, dynamic>> _clasesFiltradas() {
+    return _misClases.where((c) {
+      if (_filtroClaseId != null && _filtroClaseId!.isNotEmpty) {
+        // si se filtró por clase exacta, solo esa
+        if (c['id'] != _filtroClaseId) return false;
+      }
+      if (_filtroInstitucion != null && _filtroInstitucion!.isNotEmpty) {
+        if ((c['institucion'] ?? '') != _filtroInstitucion) return false;
+      }
+      if (_filtroCarrera != null && _filtroCarrera!.isNotEmpty) {
+        if ((c['carrera'] ?? '') != _filtroCarrera) return false;
+      }
+      if (_filtroSemestre != null && _filtroSemestre!.isNotEmpty) {
+        if ((c['semestre'] ?? '') != _filtroSemestre) return false;
+      }
+      if (_filtroCiclo != null && _filtroCiclo!.isNotEmpty) {
+        if ((c['ciclo'] ?? '') != _filtroCiclo) return false;
+      }
+      // Solo clases activas (la pantalla pide "inscritos a las clases que este profesor haya creado y que actualmente esten activas")
+      if ((c['estado'] ?? 'activo') != 'activo') return false;
+      return true;
+    }).toList();
+  }
+
+  void _onFiltroClaseChanged(String? id) async {
+    _filtroClaseId = id;
+    if (id != null) {
+      await _cargarAlumnosDeClase(id);
+    } else {
+      setState(() {
+        _alumnos = [];
+        _totalAlumnos = 0;
+      });
+    }
+  }
+
+  void _onBuscarChanged(String v) {
+    setState(() {
+      _busqueda = v;
+      // re-aplicar búsqueda sobre alumnos ya cargados
+      _alumnos = _aplicarBusquedaYFiltrosALumnos(_alumnos);
+    });
+  }
+
+  // Refrescar todo
+  Future<void> _refreshAll() async {
+    await _initLoad();
+  }
+
+  // Paginación: obtener subset
+  List<Map<String, dynamic>> get _alumnosPagina {
+    final start = _currentPage * _rowsPerPage;
+    final end = (start + _rowsPerPage).clamp(0, _alumnos.length);
+    if (start >= _alumnos.length) return [];
+    return _alumnos.sublist(start, end);
   }
 
   @override
   Widget build(BuildContext context) {
-    final r = Responsive(context);
-    final double basePadding = r.hp(2).clamp(12, 20);
-    final double titleSize = r.dp(5).clamp(22, 30);
-    final double textSize = r.dp(3.8).clamp(14, 18);
-    final double buttonPaddingV = r.hp(1.5).clamp(10, 14);
-    final double buttonPaddingH = r.wp(8).clamp(24, 40);
+final r = Responsive(context);
+final textSize = r.dp(3.6).clamp(13, 18).toDouble();
+final titleSize = r.dp(4.5).clamp(16, 22).toDouble();
+
+
+    // Si no es profesor: mostrar mensaje
+    if (!_loading && !_isProfessor) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppTheme.primaryColor,
+          title: const Text('Control de alumnos'),
+          iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
+        ),
+        drawer: const CustomDrawer(),
+        body: Center(
+          child: Text(
+            'Esta pantalla solo está disponible para profesores.',
+            style: TextStyle(fontSize: textSize),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
-        title: Text(
-          "Configuración",
-          style: TextStyle(
-            color: AppTheme.backgroundColor,
-            fontSize: textSize + 2,
-          ),
-        ),
+        title: Text('Control de alumnos', style: TextStyle(fontSize: titleSize, color: AppTheme.backgroundColor)),
         iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _refreshAll,
+            tooltip: 'Refrescar',
+          )
+        ],
       ),
       drawer: const CustomDrawer(),
       body: Padding(
-        padding: EdgeInsets.all(basePadding),
-        child: Column(
-          children: [
-            SizedBox(height: r.hp(2).clamp(12, 20)),
-            Text(
-              "Configuración de semestres,\ncarreras y periodos",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: titleSize,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            SizedBox(height: r.hp(2).clamp(12, 20)),
-
-            // Tabla
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.2),
-                      blurRadius: 6,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                padding: EdgeInsets.all(r.wp(2).clamp(8, 14)),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: DataTableTheme(
-                    data: DataTableThemeData(
-                      headingRowColor: WidgetStateProperty.all(
-                        AppTheme.primaryColor,
-                      ),
-                      headingTextStyle: TextStyle(
-                        color: AppTheme.backgroundColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: textSize,
-                      ),
-                      dataRowColor: WidgetStateProperty.all(
-                        AppTheme.backgroundColor,
-                      ),
-                      dividerThickness: 1,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: AppTheme.primaryColor,
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: DataTable(
-                      border: TableBorder.all(width: 1),
-                      columns: [
-                        DataColumn(label: Text("Semestre", style: TextStyle(fontSize: textSize))),
-                        DataColumn(label: Text("Carrera", style: TextStyle(fontSize: textSize))),
-                        DataColumn(label: Text("Periodo", style: TextStyle(fontSize: textSize))),
-                      ],
-                      rows: _data.isEmpty
-                          ? [
-                              DataRow(
-                                cells: [
-                                  DataCell(Text("-", style: TextStyle(fontSize: textSize))),
-                                  DataCell(Text("-", style: TextStyle(fontSize: textSize))),
-                                  DataCell(Text("-", style: TextStyle(fontSize: textSize))),
-                                ],
-                              ),
-                            ]
-                          : _data.map((row) {
-                              return DataRow(
-                                cells: [
-                                  DataCell(Text(row["semestre"] ?? "-", style: TextStyle(fontSize: textSize))),
-                                  DataCell(Text(row["carrera"] ?? "-", style: TextStyle(fontSize: textSize))),
-                                  DataCell(Text(row["periodo"] ?? "-", style: TextStyle(fontSize: textSize))),
-                                ],
+        padding: EdgeInsets.all(r.wp(3)),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- Controles y filtros ---
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _filtroClaseId,
+                          decoration: AppTheme.inputDecoration('Clase (título)'),
+                          items: [
+                            const DropdownMenuItem<String>(value: null, child: Text('Todas las clases')),
+                            ..._misClases.map((c) {
+                              return DropdownMenuItem<String>(
+                                value: c['id'] as String,
+                                child: Text('${c['titulo']} (${c['institucion']})'),
                               );
                             }).toList(),
+                          ],
+                          onChanged: (v) => _onFiltroClaseChanged(v),
+                        ),
+                      ),
+                      SizedBox(width: r.wp(2)),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _filtroInstitucion,
+                          decoration: AppTheme.inputDecoration('Institución'),
+                          items: [
+                            const DropdownMenuItem<String>(value: null, child: Text('Todas')),
+                            ..._instituciones.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _filtroInstitucion = v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: r.hp(1)),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _filtroCarrera,
+                          decoration: AppTheme.inputDecoration('Carrera'),
+                          items: [
+                            const DropdownMenuItem<String>(value: null, child: Text('Todas')),
+                            ..._carreras.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _filtroCarrera = v);
+                          },
+                        ),
+                      ),
+                      SizedBox(width: r.wp(2)),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _filtroSemestre,
+                          decoration: AppTheme.inputDecoration('Semestre'),
+                          items: [
+                            const DropdownMenuItem<String>(value: null, child: Text('Todos')),
+                            ..._semestres.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _filtroSemestre = v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: r.hp(1)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _filtroCiclo,
+                          decoration: AppTheme.inputDecoration('Periodo (Ciclo)'),
+                          items: [
+                            const DropdownMenuItem<String>(value: null, child: Text('Todos')),
+                            ..._ciclos.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _filtroCiclo = v);
+                          },
+                        ),
+                      ),
+                      SizedBox(width: r.wp(2)),
+                      Expanded(
+                        child: TextField(
+                          decoration: AppTheme.inputDecoration('Buscar alumno (nombre/apellidos/email)'),
+                          onChanged: (v) {
+                            _onBuscarChanged(v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: r.hp(2)),
+
+                  // --- Estadísticas ---
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Clases totales: ${_misClases.length}', style: TextStyle(fontSize: textSize)),
+                      Text('Clases visibles: ${_clasesFiltradas().length}', style: TextStyle(fontSize: textSize)),
+                      Text('Alumnos (clase seleccionada): $_totalAlumnos', style: TextStyle(fontSize: textSize)),
+                    ],
+                  ),
+
+                  SizedBox(height: r.hp(1)),
+
+                  // --- Tabla de alumnos ---
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.backgroundColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [BoxShadow(color: AppTheme.primaryColor.withOpacity(0.08), blurRadius: 6)],
+                      ),
+                      padding: EdgeInsets.all(r.wp(2)),
+                      child: Column(
+                        children: [
+                          // Tabla encabezado
+                          Expanded(
+                            child: _alumnos.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      'No hay alumnos para la clase seleccionada.',
+                                      style: TextStyle(fontSize: textSize),
+                                    ),
+                                  )
+                                : SingleChildScrollView(
+                                    child: DataTable(
+                                      headingRowColor: MaterialStateProperty.all(AppTheme.primaryColor),
+                                      headingTextStyle: TextStyle(color: AppTheme.backgroundColor, fontWeight: FontWeight.bold),
+                                      columns: [
+                                        DataColumn(label: Text('Nombre', style: TextStyle(fontSize: textSize))),
+                                        DataColumn(label: Text('Apellidos', style: TextStyle(fontSize: textSize))),
+                                        DataColumn(label: Text('Email', style: TextStyle(fontSize: textSize))),
+                                      ],
+                                      rows: _alumnosPagina.map((a) {
+                                        return DataRow(cells: [
+                                          DataCell(Text(a['nombre'] ?? '-', style: TextStyle(fontSize: textSize))),
+                                          DataCell(Text(a['apellidos'] ?? '-', style: TextStyle(fontSize: textSize))),
+                                          DataCell(Text(a['email'] ?? '-', style: TextStyle(fontSize: textSize))),
+                                        ]);
+                                      }).toList(),
+                                    ),
+                                  ),
+                          ),
+
+                          // Paginador simple
+                          if (_alumnos.isNotEmpty)
+                            Padding(
+                              padding: EdgeInsets.only(top: r.hp(1)),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Mostrando ${_alumnosPagina.length} de ${_alumnos.length}', style: TextStyle(fontSize: textSize - 1)),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                                        icon: const Icon(Icons.arrow_back_ios),
+                                      ),
+                                      Text('${_currentPage + 1}', style: TextStyle(fontSize: textSize)),
+                                      IconButton(
+                                        onPressed: (_currentPage + 1) * _rowsPerPage < _alumnos.length ? () => setState(() => _currentPage++) : null,
+                                        icon: const Icon(Icons.arrow_forward_ios),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            )
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ),
-            SizedBox(height: r.hp(2).clamp(12, 20)),
-
-            // Botón Añadir Configuración
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: buttonPaddingH,
-                  vertical: buttonPaddingV,
-                ),
-              ),
-              onPressed: () {
-                _showInputDialog(context);
-              },
-              child: Text(
-                "Añadir Configuración",
-                style: TextStyle(
-                  fontSize: textSize,
-                  color: AppTheme.backgroundColor,
-                ),
-              ),
-            ),
-
-            SizedBox(height: r.hp(2).clamp(12, 20)),
-
-            // Botón Guardar
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: buttonPaddingH + 10,
-                  vertical: buttonPaddingV,
-                ),
-              ),
-              onPressed: () {
-                bool exito = _data.isNotEmpty;
-                if (exito) {
-                  _showCustomDialog(
-                    context,
-                    title: "Datos guardados",
-                    message: "Datos guardados con éxito",
-                    icon: Icons.check_circle,
-                    iconColor: Colors.green,
-                  );
-                } else {
-                  _showCustomDialog(
-                    context,
-                    title: "Error",
-                    message: "Error al guardar la configuración",
-                    icon: Icons.cancel,
-                    iconColor: Colors.red,
-                  );
-                }
-              },
-              child: Text(
-                "Guardar",
-                style: TextStyle(
-                  fontSize: textSize,
-                  color: AppTheme.backgroundColor,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
