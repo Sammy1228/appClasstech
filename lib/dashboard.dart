@@ -1,3 +1,4 @@
+import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:appzacek/providers/provider_clases.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,18 +10,72 @@ import 'mostrarclases.dart';
 import 'tituloact.dart';
 import 'Utils/responsive.dart';
 
-class Dashboard extends StatelessWidget {
+class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
+
+  @override
+  State<Dashboard> createState() => _DashboardState();
+}
+
+class _DashboardState extends State<Dashboard> {
+  List<Map<String, dynamic>> clases = [];
+
+  @override
+  void initState() {
+    super.initState();
+    cargarClases();
+  }
+
+  Future<void> cargarClases() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final tipoUsuario =
+        Provider.of<Authentication>(context, listen: false).tipoUsuario;
+    final provider = Provider.of<ProviderClases>(context, listen: false);
+
+    try {
+      final snapshot = await provider.obtenerClases();
+      final nuevasClases = <Map<String, dynamic>>[];
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final estado = data['estado'] ?? 'activo';
+        final List<dynamic> alumnos = data['alumnos'] ?? [];
+
+        if (tipoUsuario == "alumno") {
+          if (estado == "activo" && alumnos.contains(user?.uid)) {
+            nuevasClases.add({
+              "id": doc.id,
+              "title": data['titulo'] ?? 'Sin título',
+              "desc": data['descripcion'] ?? 'Sin descripción',
+            });
+          }
+        } else if (tipoUsuario == "profesor") {
+          if (data['uidProfesor'] == user?.uid && estado == "activo") {
+            nuevasClases.add({
+              "id": doc.id,
+              "title": data['titulo'] ?? 'Sin título',
+              "desc": data['descripcion'] ?? 'Sin descripción',
+            });
+          }
+        }
+      }
+
+      setState(() => clases = nuevasClases);
+      print("✅ Clases cargadas en Dashboard ($tipoUsuario): ${clases.length}");
+    } catch (e) {
+      print("❌ Error al cargar clases en Dashboard: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final r = Responsive(context);
+    final tipoUsuario = Provider.of<Authentication>(context).tipoUsuario;
 
-    // Ajustes base para mantener proporciones similares al diseño original
     final double basePadding = r.hp(2).clamp(12, 24);
     final double cardSpacing = r.hp(1.5).clamp(10, 20);
-    final double textSize = r.dp(4).clamp(14, 20);
     final double titleSize = r.dp(4.5).clamp(16, 22);
+    final double textSize = r.dp(4).clamp(14, 20);
 
     return Scaffold(
       appBar: AppBar(
@@ -34,107 +89,116 @@ class Dashboard extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
         actions: [
-          IconButton(
-            onPressed: () {
-              final TextEditingController codigoController =
-                  TextEditingController();
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  final r2 = Responsive(context);
-                  return AlertDialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    title: Text(
-                      "Unirse a una clase",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                        fontSize: titleSize,
+          // Solo los alumnos pueden unirse a clases
+          if (tipoUsuario == 'alumno')
+            IconButton(
+              onPressed: () {
+                final TextEditingController codigoController =
+                    TextEditingController();
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    final r2 = Responsive(context);
+                    return AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Ingresa el código de la clase para unirte:",
-                          style: TextStyle(fontSize: textSize),
+                      title: Text(
+                        "Unirse a una clase",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                          fontSize: titleSize,
                         ),
-                        SizedBox(height: basePadding),
-                        TextField(
-                          controller: codigoController,
-                          decoration: const InputDecoration(
-                            labelText: "Código de clase",
-                            border: OutlineInputBorder(),
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Ingresa el código de la clase para unirte:",
+                            style: TextStyle(fontSize: textSize),
+                          ),
+                          SizedBox(height: basePadding),
+                          TextField(
+                            controller: codigoController,
+                            decoration: const InputDecoration(
+                              labelText: "Código de clase",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            "Cancelar",
+                            style: TextStyle(fontSize: textSize),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            String codigo = codigoController.text.trim();
+                            if (codigo.isNotEmpty) {
+                              final provider = Provider.of<ProviderClases>(
+                                  context,
+                                  listen: false);
+
+                              final uidAlumno =
+                                  FirebaseAuth.instance.currentUser?.uid;
+                              if (uidAlumno == null) return;
+
+                              String resultado =
+                                  await provider.unirseAClase(codigo, uidAlumno);
+
+                              String mensaje = '';
+                              Color color = Colors.green;
+
+                              switch (resultado) {
+                                case "ok":
+                                  mensaje = "Clase agregada con éxito";
+                                  break;
+                                case "no_existe":
+                                  mensaje = "Código de clase no existe";
+                                  color = Colors.red;
+                                  break;
+                                case "ya_inscrito":
+                                  mensaje = "Ya estás inscrito en esta clase";
+                                  color = Colors.orange;
+                                  break;
+                                default:
+                                  mensaje = "Ocurrió un error";
+                                  color = Colors.red;
+                              }
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(mensaje),
+                                  backgroundColor: color,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+
+                              Navigator.pop(context);
+                              await cargarClases(); // 🔁 Actualiza clases
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.secondaryColor,
+                            foregroundColor: AppTheme.backgroundColor,
+                          ),
+                          child: Text(
+                            "Unirse",
+                            style: TextStyle(fontSize: textSize),
                           ),
                         ),
                       ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          "Cancelar",
-                          style: TextStyle(fontSize: textSize),
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          String codigo = codigoController.text.trim();
-                          if (codigo.isNotEmpty) {
-                            final provider = Provider.of<ProviderClases>(context, listen: false);
-
-                            final uidAlumno = FirebaseAuth.instance.currentUser?.uid;
-                            if (uidAlumno == null) return;
-
-                            String resultado = await provider.unirseAClase(codigo, uidAlumno);
-
-                            String mensaje = '';
-                            Color color = Colors.green;
-
-                            switch (resultado) {
-                              case "ok":
-                                mensaje = "Clase agregada con éxito";
-                                break;
-                              case "no_existe":
-                                mensaje = "Código de clase no existe";
-                                color = Colors.red;
-                                break;
-                              case "ya_inscrito":
-                                mensaje = "Ya estás inscrito en esta clase";
-                                color = Colors.orange;
-                                break;
-                              default:
-                                mensaje = "Ocurrió un error";
-                                color = Colors.red;
-                            }
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(mensaje),
-                                backgroundColor: color,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.secondaryColor,
-                          foregroundColor: AppTheme.backgroundColor,
-                        ),
-                        child: Text(
-                          "Unirse",
-                          style: TextStyle(fontSize: textSize),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            icon: const Icon(Icons.add, color: AppTheme.backgroundColor),
-          ),
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.add, color: AppTheme.backgroundColor),
+            ),
         ],
       ),
       drawer: const CustomDrawer(),
@@ -143,33 +207,50 @@ class Dashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: r.hp(22).clamp(150, 220),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: AppTheme.claseColors.length,
-                separatorBuilder: (_, __) =>
-                    SizedBox(width: cardSpacing),
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: r.wp(40).clamp(140, 180),
-                    child: ClaseCard(
-                      title: "Clase ${index + 1}",
-                      description: "Descripción de la clase",
-                      color: AppTheme.claseColors[index],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MostrarClasePage(),
-                          ),
-                        );
-                      },
+            // 🔹 Clases horizontales con mismo estilo visual del dashboard original
+            if (clases.isNotEmpty)
+              SizedBox(
+                height: r.hp(22).clamp(150, 220),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: clases.length,
+                  separatorBuilder: (_, __) => SizedBox(width: cardSpacing),
+                  itemBuilder: (context, index) {
+                    final clase = clases[index];
+                    final color = AppTheme.claseColors[
+                        index % AppTheme.claseColors.length];
+                    return SizedBox(
+                      width: r.wp(40).clamp(140, 180),
+                      child: ClaseCard(
+                        title: clase["title"],
+                        description: clase["desc"],
+                        color: color,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MostrarClasePage(),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              )
+            else
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: r.hp(4)),
+                  child: Text(
+                    "No hay clases disponibles",
+                    style: TextStyle(
+                      fontSize: textSize,
+                      color: Colors.black54,
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
             SizedBox(height: r.hp(2).clamp(12, 24)),
             // Actividades
             for (int i = 1; i <= 6; i++)

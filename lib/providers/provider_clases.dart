@@ -71,7 +71,7 @@ class ProviderClases extends ChangeNotifier {
     notifyListeners();
   }
 
-  final DatabaseService _dbService = DatabaseService();
+final DatabaseService _dbService = DatabaseService();
 
   // Crear clase
   Future<void> createClass() async {
@@ -105,6 +105,8 @@ class ProviderClases extends ChangeNotifier {
     }
   }
 
+  
+
   // Obtener clases del profesor actual
   Future<List<String>> getProfessorClasses(String nombreProfesor) async {
     return await _dbService.obtenerClasesProfesor(nombreProfesor);
@@ -119,6 +121,8 @@ class ProviderClases extends ChangeNotifier {
     notifyListeners();
     return resultado;
   }
+
+  
 
   Future<void> eliminarClasesPorInstitucion(String institucion) async {
     try {
@@ -154,4 +158,15 @@ class ProviderClases extends ChangeNotifier {
       throw Exception("No se pudieron obtener las clases!!!.");
     }
   }
+
+    // ✅ Nuevo método: cambiar estado de clase
+  Future<void> cambiarEstadoClase(String claseId, String nuevoEstado) async {
+    try {
+      await _dbService.actualizarEstadoClase(claseId, nuevoEstado);
+      notifyListeners();
+    } catch (e) {
+      throw Exception("Error al cambiar el estado de la clase: $e");
+    }
+  }
 }
+

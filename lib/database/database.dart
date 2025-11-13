@@ -42,34 +42,49 @@ class DatabaseService{
   }
 
 
-  //======================= Clases =======================
+// ======================= Clases =======================
 
-  //Crear clase
-  Future<void> crearClase({
-    required String titulo,
-    required String descripcion,
-    required String nombreProfesor,
-    required String institucion,
-    required String carrera,
-    required String semestre,
-    required String cicloEscolar,
-    required String codigoAcceso,
-    required String uidProfesor,
-    required List<String> alumnos,
-  }) async {
-    await FirebaseFirestore.instance.collection('clases').add({
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'nombreProfesor': nombreProfesor,
-      'institucion': institucion,
-      'carrera': carrera,
-      'semestre': semestre,
-      'cicloEscolar': cicloEscolar,
-      'codigoAcceso': codigoAcceso,
-      'uidProfesor': uidProfesor,
-      'alumnos': alumnos,
-    });
+// Crear clase
+Future<void> crearClase({
+  required String titulo,
+  required String descripcion,
+  required String nombreProfesor,
+  required String institucion,
+  required String carrera,
+  required String semestre,
+  required String cicloEscolar,
+  required String codigoAcceso,
+  required String uidProfesor,
+  required List<String> alumnos,
+}) async {
+  await FirebaseFirestore.instance.collection('clases').add({
+    'titulo': titulo,
+    'descripcion': descripcion,
+    'nombreProfesor': nombreProfesor,
+    'institucion': institucion,
+    'carrera': carrera,
+    'semestre': semestre,
+    'cicloEscolar': cicloEscolar,
+    'codigoAcceso': codigoAcceso,
+    'uidProfesor': uidProfesor,
+    'alumnos': alumnos,
+    'estado': 'activo', // ✅ Nuevo campo por defecto
+    'fechaCreacion': FieldValue.serverTimestamp(),
+  });
+}
+
+// ✅ Nuevo método para actualizar el estado de la clase
+Future<void> actualizarEstadoClase(String claseId, String nuevoEstado) async {
+  try {
+    await FirebaseFirestore.instance
+        .collection('clases')
+        .doc(claseId)
+        .update({'estado': nuevoEstado});
+  } catch (e) {
+    print("⚠️ Error al actualizar estado de clase: $e");
+    rethrow;
   }
+}
 
   // Obtener clases por profesor
   Future<List<String>> obtenerClasesProfesor(String nombreProfesor) async {

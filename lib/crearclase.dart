@@ -260,7 +260,7 @@ class _CrearClasePageState extends State<CrearClasePage> {
                       try {
                         clasesProvider.setUidProfesor = FirebaseAuth.instance.currentUser!.uid;
                         
-                        await clasesProvider.createClass();
+                        await clasesProvider.createClass();// se crea con estado = 'activo' por defecto
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text("Clase creada exitosamente")),
