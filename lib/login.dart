@@ -64,27 +64,31 @@ class _LoginState extends State<Login> {
             children: [
               // 1. Fondo superior con texto
               Column(
-                mainAxisSize: MainAxisSize.min, // Ocupa solo el espacio necesario
+                mainAxisSize:
+                    MainAxisSize.min, // Ocupa solo el espacio necesario
                 children: [
-                  SizedBox(height: responsive.screenHeight * (responsive.isPortrait ? 0.15 : 0.08)),
+                  SizedBox(
+                    height:
+                        responsive.screenHeight *
+                        (responsive.isPortrait ? 0.15 : 0.08),
+                  ),
                   Center(
                     child: Text(
                       "¡Bienvenido!\nIniciar Sesión",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: responsive.fontScale,
+                        // ✅ CAMBIO: Añadido clamp
+                        fontSize: responsive.fontScale.clamp(22, 34),
                         fontWeight: FontWeight.bold,
                         color: AppTheme.backgroundColor,
                       ),
                     ),
                   ),
-
                 ],
               ),
 
               // Parte blanca inferior con formulario
               Expanded(
-
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
                   width: double.infinity,
@@ -94,139 +98,174 @@ class _LoginState extends State<Login> {
                   ),
                   decoration: const BoxDecoration(
                     color: AppTheme.backgroundColor,
-                    borderRadius: 
-                    BorderRadius.vertical(top: Radius.circular(40)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(40),
+                    ),
                   ),
                   child: SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: responsive.isPortrait ? double.infinity : responsive.screenWidth * 0.6,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TextField(
-                            controller: _emailCtrl,
-                            decoration: AppTheme.inputDecoration("Correo"),
-                          ),
-                          SizedBox(height: responsive.screenHeight * 0.02),
-                          TextField(
-                            controller: _passwordCtrl,
-                            obscureText: true,
-                            decoration: AppTheme.inputDecoration("Contraseña"),
-                          ),
-                          SizedBox(height: responsive.screenHeight * 0.015),
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: _rememberMe,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
+                    // ✅ CAMBIO: Añadido Center para web
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          // ✅ CAMBIO: maxWidth fijo para el formulario en web
+                          maxWidth: 500,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextField(
+                              controller: _emailCtrl,
+                              decoration: AppTheme.inputDecoration("Correo"),
+                            ),
+                            SizedBox(height: responsive.screenHeight * 0.02),
+                            TextField(
+                              controller: _passwordCtrl,
+                              obscureText: true,
+                              decoration: AppTheme.inputDecoration(
+                                "Contraseña",
                               ),
-                              Flexible(
-                                child: Text(
-                                  "Recuérdame",
-                                  style: TextStyle(
-                                    fontSize: responsive.isPortrait
-                                        ? responsive.screenWidth * 0.04
-                                        : responsive.screenHeight * 0.04,
+                            ),
+                            SizedBox(height: responsive.screenHeight * 0.015),
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? false;
+                                    });
+                                  },
+                                ),
+                                Flexible(
+                                  child: Text(
+                                    "Recuérdame",
+                                    style: TextStyle(
+                                      // ✅ CAMBIO: Añadido clamp
+                                      fontSize:
+                                          (responsive.isPortrait
+                                                  ? responsive.screenWidth *
+                                                        0.04
+                                                  : responsive.screenHeight *
+                                                        0.04)
+                                              .clamp(14, 18),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: responsive.screenHeight * 0.02),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.secondaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                vertical: responsive.screenHeight * 0.018,
-                              ),
+                              ],
                             ),
-                            onPressed: () async {
-                              final auth = Provider.of<Authentication>(context, listen: false);
-                              final email = _emailCtrl.text.trim();
-                              final password = _passwordCtrl.text;
-
-                              if (email.isEmpty || password.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Por favor ingresa correo y contraseña")),
+                            SizedBox(height: responsive.screenHeight * 0.02),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.secondaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  vertical: responsive.screenHeight * 0.018,
+                                ),
+                              ),
+                              onPressed: () async {
+                                final auth = Provider.of<Authentication>(
+                                  context,
+                                  listen: false,
                                 );
-                                return;
-                              }
+                                final email = _emailCtrl.text.trim();
+                                final password = _passwordCtrl.text;
 
-                              auth.setEmail = email;
-                              auth.setPassword = password;
-
-                              setState(() => _isLoading = true);
-
-                              //guardar credenciales si aplica
-                              await _saveCredentials();
-
-                              try {
-                                final user = await auth.login(); 
-                                if (user != null && auth.tipoUsuario.isNotEmpty) {
-                                  Navigator.pushReplacementNamed(context, '/dashboard');
-                                } else {
+                                if (email.isEmpty || password.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Credenciales incorrectas")),
-                                  );
-                                }
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(e.toString())),
-                                );
-                                return;
-                              } finally {
-                                setState(() => _isLoading = false);
-                              }
-                            },
-                            child: Text(
-                              _isLoading ? "Cargando..." : "Iniciar Sesión",
-                              style: TextStyle(
-                                fontSize: responsive.isPortrait
-                                    ? responsive.screenWidth * 0.045
-                                    : responsive.screenHeight * 0.045,
-                                color: AppTheme.backgroundColor,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: responsive.screenHeight * 0.025),
-                          Center(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/register');
-                              },
-                              child: Text.rich(
-                                TextSpan(
-                                  text: "¿No tienes cuenta? ",
-                                  style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: responsive.isPortrait
-                                        ? responsive.screenWidth * 0.04
-                                        : responsive.screenHeight * 0.04,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: "Regístrate aquí",
-                                      style: TextStyle(
-                                        color: AppTheme.secondaryColor,
-                                        fontWeight: FontWeight.bold,
+                                    const SnackBar(
+                                      content: Text(
+                                        "Por favor ingresa correo y contraseña",
                                       ),
                                     ),
-                                  ],
+                                  );
+                                  return;
+                                }
+
+                                auth.setEmail = email;
+                                auth.setPassword = password;
+
+                                setState(() => _isLoading = true);
+
+                                //guardar credenciales si aplica
+                                await _saveCredentials();
+
+                                try {
+                                  final user = await auth.login();
+                                  if (user != null &&
+                                      auth.tipoUsuario.isNotEmpty) {
+                                    Navigator.pushReplacementNamed(
+                                      context,
+                                      '/dashboard',
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Credenciales incorrectas",
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                  return;
+                                } finally {
+                                  setState(() => _isLoading = false);
+                                }
+                              },
+                              child: Text(
+                                _isLoading ? "Cargando..." : "Iniciar Sesión",
+                                style: TextStyle(
+                                  // ✅ CAMBIO: Añadido clamp
+                                  fontSize:
+                                      (responsive.isPortrait
+                                              ? responsive.screenWidth * 0.045
+                                              : responsive.screenHeight * 0.045)
+                                          .clamp(15, 20),
+                                  color: AppTheme.backgroundColor,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                            SizedBox(height: responsive.screenHeight * 0.025),
+                            Center(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/register');
+                                },
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: "¿No tienes cuenta? ",
+                                    style: TextStyle(
+                                      color: Colors.black54,
+                                      // ✅ CAMBIO: Añadido clamp
+                                      fontSize:
+                                          (responsive.isPortrait
+                                                  ? responsive.screenWidth *
+                                                        0.04
+                                                  : responsive.screenHeight *
+                                                        0.04)
+                                              .clamp(14, 18),
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: "Regístrate aquí",
+                                        style: TextStyle(
+                                          color: AppTheme.secondaryColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

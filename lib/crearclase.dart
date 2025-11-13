@@ -53,18 +53,18 @@ class _CrearClasePageState extends State<CrearClasePage> {
 
     final authProvider = Provider.of<Authentication>(context, listen: false);
     final nombreProfesor = authProvider.nombre;
-List<String> institucionesDisponibles = authProvider.instituciones
-    .where((inst) => inst['estado'] == 'activo') // ✅ solo activas
-    .map<String>((inst) => inst['nombre']?.toString() ?? '')
-    .where((nombre) => nombre.trim().isNotEmpty)
-    .toList();
+    List<String> institucionesDisponibles = authProvider.instituciones
+        .where((inst) => inst['estado'] == 'activo') // ✅ solo activas
+        .map<String>((inst) => inst['nombre']?.toString() ?? '')
+        .where((nombre) => nombre.trim().isNotEmpty)
+        .toList();
 
     if (institucionesDisponibles.isEmpty) {
       institucionesDisponibles = [
         'Instituto Tecnológico Superior de Uruapan',
         'Universidad Michoacana',
         'Universidad de Guadalajara',
-        'Otra institución'
+        'Otra institución',
       ];
     }
 
@@ -78,10 +78,13 @@ List<String> institucionesDisponibles = authProvider.instituciones
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(
-            horizontal: responsive.horizontalPadding, vertical: 16),
+          horizontal: responsive.horizontalPadding,
+          vertical: 16,
+        ),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: responsive.fieldWidth),
+            // ✅ CAMBIO: maxWidth fijo para el formulario
+            constraints: BoxConstraints(maxWidth: 700),
             child: Form(
               key: _formKey,
               child: Column(
@@ -113,17 +116,21 @@ List<String> institucionesDisponibles = authProvider.instituciones
                   DropdownButtonFormField<String>(
                     value: institucionSeleccionada,
                     items: institucionesDisponibles
-                        .map((inst) => DropdownMenuItem<String>(
-                              value: inst,
-                              child: Text(inst),
-                            ))
+                        .map(
+                          (inst) => DropdownMenuItem<String>(
+                            value: inst,
+                            child: Text(inst),
+                          ),
+                        )
                         .toList(),
                     onChanged: (value) {
                       setState(() {
                         institucionSeleccionada = value;
                       });
                     },
-                    decoration: AppTheme.inputDecoration("Seleccionar institución"),
+                    decoration: AppTheme.inputDecoration(
+                      "Seleccionar institución",
+                    ),
                     validator: _required,
                   ),
 
@@ -136,10 +143,12 @@ List<String> institucionesDisponibles = authProvider.instituciones
                         child: TextFormField(
                           controller: _carreraCtrl,
                           enabled: !_carreraNA,
-                          decoration:
-                              AppTheme.inputDecoration("Carrera (escribir o marcar N/A)"),
+                          decoration: AppTheme.inputDecoration(
+                            "Carrera (escribir o marcar N/A)",
+                          ),
                           validator: (value) {
-                            if (!_carreraNA && (value == null || value.trim().isEmpty)) {
+                            if (!_carreraNA &&
+                                (value == null || value.trim().isEmpty)) {
                               return 'Campo obligatorio o marque N/A.';
                             }
                             return null;
@@ -176,10 +185,12 @@ List<String> institucionesDisponibles = authProvider.instituciones
                         child: TextFormField(
                           controller: _semestreCtrl,
                           enabled: !_semestreNA,
-                          decoration:
-                              AppTheme.inputDecoration("Semestre (escribir o marcar N/A)"),
+                          decoration: AppTheme.inputDecoration(
+                            "Semestre (escribir o marcar N/A)",
+                          ),
                           validator: (value) {
-                            if (!_semestreNA && (value == null || value.trim().isEmpty)) {
+                            if (!_semestreNA &&
+                                (value == null || value.trim().isEmpty)) {
                               return 'Campo obligatorio o marque N/A.';
                             }
                             return null;
@@ -213,7 +224,8 @@ List<String> institucionesDisponibles = authProvider.instituciones
                   TextFormField(
                     controller: _cicloEscolarCtrl,
                     decoration: AppTheme.inputDecoration(
-                        "Ciclo Escolar (Ej: Agosto 2024 - Dic 2024)"),
+                      "Ciclo Escolar (Ej: Agosto 2024 - Dic 2024)",
+                    ),
                     validator: validateCicloEscolar,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
@@ -232,34 +244,42 @@ List<String> institucionesDisponibles = authProvider.instituciones
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.secondaryColor,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
                     onPressed: () async {
                       if (!_formKey.currentState!.validate()) return;
 
-                      final clasesProvider =
-                          Provider.of<ProviderClases>(context, listen: false);
+                      final clasesProvider = Provider.of<ProviderClases>(
+                        context,
+                        listen: false,
+                      );
                       final codigoGenerado = _codigoCtrl.text.trim();
 
                       clasesProvider.setTitulo = _tituloCtrl.text.trim();
-                      clasesProvider.setDescripcion = _descripcionCtrl.text.trim();
+                      clasesProvider.setDescripcion = _descripcionCtrl.text
+                          .trim();
                       clasesProvider.setNombreProfesor = nombreProfesor;
                       clasesProvider.setInstitucion =
                           institucionSeleccionada ?? "";
                       clasesProvider.setCarrera = _carreraCtrl.text.trim();
                       clasesProvider.setSemestre = _semestreCtrl.text.trim();
-                      clasesProvider.setCicloEscolar =
-                          _cicloEscolarCtrl.text.trim();
+                      clasesProvider.setCicloEscolar = _cicloEscolarCtrl.text
+                          .trim();
                       clasesProvider.setCodigoAcceso = codigoGenerado;
-                      clasesProvider.setUidProfesor = FirebaseAuth.instance.currentUser!.uid; // ✅ Aquí
+                      clasesProvider.setUidProfesor =
+                          FirebaseAuth.instance.currentUser!.uid; // ✅ Aquí
 
                       try {
-                        clasesProvider.setUidProfesor = FirebaseAuth.instance.currentUser!.uid;
-                        
-                        await clasesProvider.createClass();// se crea con estado = 'activo' por defecto
+                        clasesProvider.setUidProfesor =
+                            FirebaseAuth.instance.currentUser!.uid;
+
+                        await clasesProvider
+                            .createClass(); // se crea con estado = 'activo' por defecto
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text("Clase creada exitosamente")),
+                            content: Text("Clase creada exitosamente"),
+                          ),
                         );
 
                         // Limpiar campos
@@ -277,16 +297,20 @@ List<String> institucionesDisponibles = authProvider.instituciones
 
                         _formKey.currentState!.reset();
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Error: $e")),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text("Error: $e")));
                       }
                     },
                     child: const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                      child:
-                          Text("Crear", style: TextStyle(color: Colors.white)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 14,
+                      ),
+                      child: Text(
+                        "Crear",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                 ],

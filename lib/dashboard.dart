@@ -41,6 +41,7 @@ class _DashboardState extends State<Dashboard> {
     final user = FirebaseAuth.instance.currentUser;
 
     // Tamaños de UI
+    // ✅ ESTO YA ESTABA BIEN (con clamp)
     final double basePadding = r.hp(2).clamp(12, 24);
     final double cardSpacing = r.hp(1.5).clamp(10, 20);
     final double titleSize = r.dp(4.5).clamp(16, 22);
@@ -68,6 +69,10 @@ class _DashboardState extends State<Dashboard> {
                   context: context,
                   builder: (BuildContext context) {
                     final r2 = Responsive(context);
+                    // ✅ Usamos los clamped values
+                    final double dialogTitleSize = r2.dp(4.5).clamp(16, 22);
+                    final double dialogTextSize = r2.dp(4).clamp(14, 20);
+
                     return AlertDialog(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -77,7 +82,7 @@ class _DashboardState extends State<Dashboard> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,
-                          fontSize: titleSize,
+                          fontSize: dialogTitleSize,
                         ),
                       ),
                       content: Column(
@@ -85,7 +90,7 @@ class _DashboardState extends State<Dashboard> {
                         children: [
                           Text(
                             "Ingresa el código de la clase para unirte:",
-                            style: TextStyle(fontSize: textSize),
+                            style: TextStyle(fontSize: dialogTextSize),
                           ),
                           SizedBox(height: basePadding),
                           TextField(
@@ -102,7 +107,7 @@ class _DashboardState extends State<Dashboard> {
                           onPressed: () => Navigator.pop(context),
                           child: Text(
                             "Cancelar",
-                            style: TextStyle(fontSize: textSize),
+                            style: TextStyle(fontSize: dialogTextSize),
                           ),
                         ),
                         ElevatedButton(
@@ -166,7 +171,7 @@ class _DashboardState extends State<Dashboard> {
                           ),
                           child: Text(
                             "Unirse",
-                            style: TextStyle(fontSize: textSize),
+                            style: TextStyle(fontSize: dialogTextSize),
                           ),
                         ),
                       ],
@@ -245,6 +250,7 @@ class _DashboardState extends State<Dashboard> {
                 // --- SECCIÓN DE CLASES (Horizontal) ---
                 if (nuevasClases.isNotEmpty)
                   SizedBox(
+                    // ✅ ESTO YA ESTABA BIEN (con clamp)
                     height: r.hp(22).clamp(150, 220),
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
@@ -255,6 +261,7 @@ class _DashboardState extends State<Dashboard> {
                         final color = AppTheme
                             .claseColors[index % AppTheme.claseColors.length];
                         return SizedBox(
+                          // ✅ ESTO YA ESTABA BIEN (con clamp)
                           width: r.wp(40).clamp(140, 180),
                           child: ClaseCard(
                             title: clase["title"],
@@ -412,6 +419,7 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
+  // ✅ CAMBIO: Aplicado clamp() a todos los valores
   static Widget _activityCard(
     BuildContext context,
     String title,

@@ -56,7 +56,8 @@ class MostrarClasePage extends StatelessWidget {
               nombreClase, // 👈 DATO REAL
               style: TextStyle(
                 color: AppTheme.backgroundColor,
-                fontSize: responsive.dp(5),
+                // ✅ CAMBIO: Añadido clamp
+                fontSize: responsive.dp(5).clamp(18, 22),
               ),
             ),
             leading: Builder(
@@ -65,7 +66,8 @@ class MostrarClasePage extends StatelessWidget {
                   icon: Icon(
                     Icons.menu,
                     color: AppTheme.backgroundColor,
-                    size: responsive.dp(5.5),
+                    // ✅ CAMBIO: Añadido clamp
+                    size: responsive.dp(5.5).clamp(24, 28),
                   ),
                   onPressed: () {
                     Scaffold.of(context).openDrawer();
@@ -78,7 +80,8 @@ class MostrarClasePage extends StatelessWidget {
                 icon: Icon(
                   Icons.delete,
                   color: AppTheme.backgroundColor,
-                  size: responsive.dp(5.5),
+                  // ✅ CAMBIO: Añadido clamp
+                  size: responsive.dp(5.5).clamp(24, 28),
                 ),
                 onPressed: () {
                   _showDeleteConfirmationDialog(
@@ -91,123 +94,146 @@ class MostrarClasePage extends StatelessWidget {
             ],
           ),
           drawer: const CustomDrawer(),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: responsive.horizontalPadding,
-              vertical: responsive.verticalPadding,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Caja amarilla con información de la clase
-                Container(
-                  padding: EdgeInsets.all(responsive.dp(4)),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFE5B4),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 6),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              claseData['titulo'] ??
-                                  'Sin Título', // 👈 DATO REAL
-                              style: TextStyle(
-                                fontSize: responsive.dp(4.8),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: responsive.hp(1)),
-                            Text(
-                              claseData['nombreProfesor'] ??
-                                  'Sin Docente', // 👈 DATO REAL
-                              style: TextStyle(
-                                fontSize: responsive.dp(3.8),
-                                color: Colors.black54,
-                              ),
-                            ),
-                            SizedBox(height: responsive.hp(1)),
-                            Text(
-                              claseData['descripcion'] ??
-                                  'Sin descripción.', // 👈 DATO REAL
-                              style: AppTheme.bodyText.copyWith(
-                                fontSize: responsive.dp(3.5),
-                              ),
-                            ),
-                          ],
-                        ),
+          // ✅ CAMBIO: Añadido Center y ConstrainedBox
+          body: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 900), // Ancho de contenido
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.horizontalPadding,
+                  vertical: responsive.verticalPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Caja amarilla con información de la clase
+                    Container(
+                      // ✅ CAMBIO: Añadido clamp
+                      padding: EdgeInsets.all(responsive.dp(4).clamp(16, 24)),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE5B4),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 6),
+                        ],
                       ),
-                      SizedBox(width: responsive.wp(3)),
-                      Image.asset(
-                        'assets/images/logo.png', // Asegúrate que esta ruta sea correcta
-                        width: responsive.wp(18),
-                        height: responsive.wp(18),
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.school,
-                          size: responsive.wp(18),
-                        ), // Placeholder si la imagen falla
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  claseData['titulo'] ??
+                                      'Sin Título', // 👈 DATO REAL
+                                  style: TextStyle(
+                                    // ✅ CAMBIO: Añadido clamp
+                                    fontSize: responsive.dp(4.8).clamp(18, 24),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                // ✅ CAMBIO: Añadido clamp
+                                SizedBox(height: responsive.hp(1).clamp(8, 12)),
+                                Text(
+                                  claseData['nombreProfesor'] ??
+                                      'Sin Docente', // 👈 DATO REAL
+                                  style: TextStyle(
+                                    // ✅ CAMBIO: Añadido clamp
+                                    fontSize: responsive.dp(3.8).clamp(15, 19),
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                // ✅ CAMBIO: Añadido clamp
+                                SizedBox(height: responsive.hp(1).clamp(8, 12)),
+                                Text(
+                                  claseData['descripcion'] ??
+                                      'Sin descripción.', // 👈 DATO REAL
+                                  style: AppTheme.bodyText.copyWith(
+                                    // ✅ CAMBIO: Añadido clamp
+                                    fontSize: responsive.dp(3.5).clamp(14, 17),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // ✅ CAMBIO: Añadido clamp
+                          SizedBox(width: responsive.wp(3).clamp(10, 16)),
+                          Image.asset(
+                            'assets/images/logo.png',
+                            // ✅ CAMBIO: Añadido clamp
+                            width: responsive.wp(18).clamp(60, 80),
+                            height: responsive.wp(18).clamp(60, 80),
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.school,
+                              // ✅ CAMBIO: Añadido clamp
+                              size: responsive.wp(18).clamp(60, 80),
+                            ), // Placeholder si la imagen falla
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    // ✅ CAMBIO: Añadido clamp
+                    SizedBox(height: responsive.hp(2).clamp(16, 24)),
+
+                    // Título de sección
+                    Text(
+                      "Actividades",
+                      style: TextStyle(
+                        // ✅ CAMBIO: Añadido clamp
+                        fontSize: responsive.dp(5).clamp(18, 24),
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    // ✅ CAMBIO: Añadido clamp
+                    SizedBox(height: responsive.hp(2).clamp(16, 24)),
+
+                    // 2. OBTENEMOS EL STREAM DE ACTIVIDADES FILTRADAS
+                    StreamBuilder<QuerySnapshot>(
+                      stream:
+                          Provider.of<ProviderActividades>(
+                            context,
+                            listen: false,
+                          ).obtenerActividadesStreamPorClase(
+                            nombreClase,
+                          ), // 👈 FILTRO
+                      builder: (context, snapshotActividades) {
+                        // --- Manejo de estados de carga/error de ACTIVIDADES ---
+                        if (snapshotActividades.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snapshotActividades.hasError) {
+                          return Center(
+                            child: Text(
+                              "Error al cargar actividades: ${snapshotActividades.error}",
+                            ),
+                          );
+                        }
+                        if (!snapshotActividades.hasData ||
+                            snapshotActividades.data!.docs.isEmpty) {
+                          return const Center(
+                            child: Text("No hay actividades para esta clase."),
+                          );
+                        }
+
+                        // --- DATOS DE ACTIVIDADES ---
+                        final actividadesDocs = snapshotActividades.data!.docs;
+
+                        return Column(
+                          children: actividadesDocs.map((doc) {
+                            // Pasamos el DocumentSnapshot completo
+                            return _buildActivityCard(context, responsive, doc);
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                SizedBox(height: responsive.hp(2)),
-
-                // Título de sección
-                Text(
-                  "Actividades",
-                  style: TextStyle(
-                    fontSize: responsive.dp(5),
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                SizedBox(height: responsive.hp(2)),
-
-                // 2. OBTENEMOS EL STREAM DE ACTIVIDADES FILTRADAS
-                StreamBuilder<QuerySnapshot>(
-                  stream: Provider.of<ProviderActividades>(
-                    context,
-                    listen: false,
-                  ).obtenerActividadesStreamPorClase(nombreClase), // 👈 FILTRO
-                  builder: (context, snapshotActividades) {
-                    // --- Manejo de estados de carga/error de ACTIVIDADES ---
-                    if (snapshotActividades.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshotActividades.hasError) {
-                      return Center(
-                        child: Text(
-                          "Error al cargar actividades: ${snapshotActividades.error}",
-                        ),
-                      );
-                    }
-                    if (!snapshotActividades.hasData ||
-                        snapshotActividades.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text("No hay actividades para esta clase."),
-                      );
-                    }
-
-                    // --- DATOS DE ACTIVIDADES ---
-                    final actividadesDocs = snapshotActividades.data!.docs;
-
-                    return Column(
-                      children: actividadesDocs.map((doc) {
-                        // Pasamos el DocumentSnapshot completo
-                        return _buildActivityCard(context, responsive, doc);
-                      }).toList(),
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -216,6 +242,7 @@ class MostrarClasePage extends StatelessWidget {
   }
 
   // Tarjeta de actividad (Modificada para aceptar datos)
+  // ✅ CAMBIO: Aplicado clamp() a todos los valores internos
   Widget _buildActivityCard(
     BuildContext context,
     Responsive responsive,
@@ -242,8 +269,8 @@ class MostrarClasePage extends StatelessWidget {
         );
       },
       child: Container(
-        margin: EdgeInsets.only(bottom: responsive.hp(1.5)),
-        padding: EdgeInsets.all(responsive.dp(3.5)),
+        margin: EdgeInsets.only(bottom: responsive.hp(1.5).clamp(10, 15)),
+        padding: EdgeInsets.all(responsive.dp(3.5).clamp(14, 20)),
         decoration: BoxDecoration(
           color: AppTheme.backgroundColor,
           borderRadius: BorderRadius.circular(16),
@@ -257,15 +284,15 @@ class MostrarClasePage extends StatelessWidget {
                 Icon(
                   Icons.edit,
                   color: AppTheme.primaryColor,
-                  size: responsive.dp(5),
+                  size: responsive.dp(5).clamp(22, 26),
                 ),
-                SizedBox(width: responsive.wp(2)),
+                SizedBox(width: responsive.wp(2).clamp(8, 12)),
                 Flexible(
                   // Añadido para evitar overflow
                   child: Text(
                     actividadData['titulo'] ?? 'Sin Título', // 👈 DATO REAL
                     style: TextStyle(
-                      fontSize: responsive.dp(4),
+                      fontSize: responsive.dp(4).clamp(16, 19),
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor,
                     ),
@@ -274,20 +301,20 @@ class MostrarClasePage extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: responsive.hp(0.5)),
+            SizedBox(height: responsive.hp(0.5).clamp(4, 6)),
             Text(
               fechaFormateada, // 👈 DATO REAL
               style: TextStyle(
                 color: Colors.black54,
-                fontSize: responsive.dp(3),
+                fontSize: responsive.dp(3).clamp(12, 14),
               ),
             ),
-            SizedBox(height: responsive.hp(0.8)),
+            SizedBox(height: responsive.hp(0.8).clamp(6, 10)),
             Text(
               actividadData['descripcion'] ?? 'Sin descripción', // 👈 DATO REAL
               style: TextStyle(
                 color: Colors.black54,
-                fontSize: responsive.dp(3.3),
+                fontSize: responsive.dp(3.3).clamp(13, 16),
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -299,6 +326,7 @@ class MostrarClasePage extends StatelessWidget {
   }
 
   // Diálogo de confirmación
+  // ✅ CAMBIO: Aplicado clamp() a fuentes
   void _showDeleteConfirmationDialog(
     BuildContext context,
     Responsive responsive,
@@ -313,18 +341,18 @@ class MostrarClasePage extends StatelessWidget {
           ),
           title: Text(
             "Eliminar clase",
-            style: TextStyle(fontSize: responsive.dp(4.5)),
+            style: TextStyle(fontSize: responsive.dp(4.5).clamp(18, 22)),
           ),
           content: Text(
             "¿Estás seguro de que quieres eliminar esta clase? Esta acción no se puede deshacer.",
-            style: TextStyle(fontSize: responsive.dp(3.4)),
+            style: TextStyle(fontSize: responsive.dp(3.4).clamp(14, 17)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
                 "Cancelar",
-                style: TextStyle(fontSize: responsive.dp(3.5)),
+                style: TextStyle(fontSize: responsive.dp(3.5).clamp(14, 17)),
               ),
             ),
             ElevatedButton(
@@ -349,7 +377,7 @@ class MostrarClasePage extends StatelessWidget {
                 "Eliminar",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: responsive.dp(3.5),
+                  fontSize: responsive.dp(3.5).clamp(14, 17),
                 ),
               ),
             ),

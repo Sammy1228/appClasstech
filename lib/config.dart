@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Configuracion extends StatefulWidget {
   const Configuracion({super.key});
 
@@ -15,14 +15,14 @@ class Configuracion extends StatefulWidget {
 }
 
 class _ConfiguracionState extends State<Configuracion> {
-  
-   final FirebaseFirestore _fire = FirebaseFirestore.instance;
+  final FirebaseFirestore _fire = FirebaseFirestore.instance;
 
   bool _loading = true;
   bool _isProfessor = false;
 
   // Datos maestros
-  List<Map<String, dynamic>> _misClases = []; // cada item: {id, titulo, institucion, carrera, semestre, ciclo, estado}
+  List<Map<String, dynamic>> _misClases =
+      []; // cada item: {id, titulo, institucion, carrera, semestre, ciclo, estado}
   List<String> _instituciones = [];
   List<String> _carreras = [];
   List<String> _semestres = [];
@@ -37,7 +37,8 @@ class _ConfiguracionState extends State<Configuracion> {
   String _busqueda = '';
 
   // Tabla alumnos
-  List<Map<String, dynamic>> _alumnos = []; // cada item: {uid, nombre, apellidos, email}
+  List<Map<String, dynamic>> _alumnos =
+      []; // cada item: {uid, nombre, apellidos, email}
   int _totalAlumnos = 0;
 
   // Paginación simple
@@ -66,51 +67,63 @@ class _ConfiguracionState extends State<Configuracion> {
       if (uid == null) throw Exception('Usuario no autenticado');
 
       // Obtener las clases del profesor (solo activas por defecto)
-final q = await _fire
-  .collection('clases')
-  .where('uidProfesor', isEqualTo: uid)
-  .get();
+      final q = await _fire
+          .collection('clases')
+          .where('uidProfesor', isEqualTo: uid)
+          .get();
 
-// 🔹 Ordenamos manualmente por fecha de creación (descendente)
-final docs = q.docs;
-docs.sort((a, b) {
-  final fechaA = (a['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime(0);
-  final fechaB = (b['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime(0);
-  return fechaB.compareTo(fechaA); // orden descendente
-});
+      // 🔹 Ordenamos manualmente por fecha de creación (descendente)
+      final docs = q.docs;
+      docs.sort((a, b) {
+        final fechaA =
+            (a['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime(0);
+        final fechaB =
+            (b['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime(0);
+        return fechaB.compareTo(fechaA); // orden descendente
+      });
 
-final clases = docs.map((d) {
-  final data = d.data();
-  return {
-    'id': d.id,
-    'titulo': data['titulo'] ?? 'Sin título',
-    'descripcion': data['descripcion'] ?? 'Sin descripción',
-    'institucion': data['institucion'] ?? 'Sin institución',
-    'carrera': data['carrera'] ?? 'Sin carrera',
-    'semestre': data['semestre'] ?? 'Sin semestre',
-    'ciclo': data['cicloEscolar'] ?? 'Sin ciclo',
-    'estado': data['estado'] ?? 'activo',
-    'fechaCreacion': (data['fechaCreacion'] is Timestamp)
-        ? (data['fechaCreacion'] as Timestamp).toDate()
-        : DateTime.fromMillisecondsSinceEpoch(0),
-  };
-}).toList();
+      final clases = docs.map((d) {
+        final data = d.data();
+        return {
+          'id': d.id,
+          'titulo': data['titulo'] ?? 'Sin título',
+          'descripcion': data['descripcion'] ?? 'Sin descripción',
+          'institucion': data['institucion'] ?? 'Sin institución',
+          'carrera': data['carrera'] ?? 'Sin carrera',
+          'semestre': data['semestre'] ?? 'Sin semestre',
+          'ciclo': data['cicloEscolar'] ?? 'Sin ciclo',
+          'estado': data['estado'] ?? 'activo',
+          'fechaCreacion': (data['fechaCreacion'] is Timestamp)
+              ? (data['fechaCreacion'] as Timestamp).toDate()
+              : DateTime.fromMillisecondsSinceEpoch(0),
+        };
+      }).toList();
 
-// 🔹 Asignar correctamente la lista
-_misClases = clases;
+      // 🔹 Asignar correctamente la lista
+      _misClases = clases;
 
-// 🔹 Llenar listas de filtros (únicos)
-_instituciones = _misClases.map((c) => c['institucion'] as String).toSet().toList();
-_carreras = _misClases.map((c) => c['carrera'] as String).toSet().toList();
-_semestres = _misClases.map((c) => c['semestre'] as String).toSet().toList();
-_ciclos = _misClases.map((c) => c['ciclo'] as String).toSet().toList();
+      // 🔹 Llenar listas de filtros (únicos)
+      _instituciones = _misClases
+          .map((c) => c['institucion'] as String)
+          .toSet()
+          .toList();
+      _carreras = _misClases
+          .map((c) => c['carrera'] as String)
+          .toSet()
+          .toList();
+      _semestres = _misClases
+          .map((c) => c['semestre'] as String)
+          .toSet()
+          .toList();
+      _ciclos = _misClases.map((c) => c['ciclo'] as String).toSet().toList();
 
       // Estadísticas iniciales
       _totalAlumnos = 0;
       // por defecto seleccionar la primera clase activa si existe
       final primeraActiva = _misClases.firstWhere(
-          (c) => c['estado'] == 'activo',
-          orElse: () => ( _misClases.isNotEmpty ? _misClases.first : {}));
+        (c) => c['estado'] == 'activo',
+        orElse: () => (_misClases.isNotEmpty ? _misClases.first : {}),
+      );
       if (primeraActiva != null && primeraActiva.isNotEmpty) {
         _filtroClaseId = primeraActiva['id'] as String?;
       }
@@ -123,9 +136,9 @@ _ciclos = _misClases.map((c) => c['ciclo'] as String).toSet().toList();
       }
     } catch (e, s) {
       debugPrint('Error initLoad ControlAlumnos: $e\n$s');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar datos: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar datos: $e')));
     } finally {
       setState(() => _loading = false);
     }
@@ -150,11 +163,15 @@ _ciclos = _misClases.map((c) => c['ciclo'] as String).toSet().toList();
       }
 
       final data = doc.data()!;
-      final List<dynamic> alumnosUids = List<dynamic>.from(data['alumnos'] ?? []);
+      final List<dynamic> alumnosUids = List<dynamic>.from(
+        data['alumnos'] ?? [],
+      );
       _totalAlumnos = alumnosUids.length;
 
       // Cargar datos de cada alumno (paralelo)
-      final futures = alumnosUids.map((uid) => _fire.collection('alumnos').doc(uid.toString()).get());
+      final futures = alumnosUids.map(
+        (uid) => _fire.collection('alumnos').doc(uid.toString()).get(),
+      );
       final snapshots = await Future.wait(futures);
 
       final alumnosFull = <Map<String, dynamic>>[];
@@ -178,19 +195,22 @@ _ciclos = _misClases.map((c) => c['ciclo'] as String).toSet().toList();
       });
     } catch (e, s) {
       debugPrint('Error cargarAlumnosDeClase: $e\n$s');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar alumnos: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar alumnos: $e')));
     } finally {
       setState(() => _loading = false);
     }
   }
 
-  List<Map<String, dynamic>> _aplicarBusquedaYFiltrosALumnos(List<Map<String, dynamic>> source) {
+  List<Map<String, dynamic>> _aplicarBusquedaYFiltrosALumnos(
+    List<Map<String, dynamic>> source,
+  ) {
     final q = _busqueda.trim().toLowerCase();
     return source.where((a) {
       if (q.isNotEmpty) {
-        final match = (a['nombre'] as String).toLowerCase().contains(q) ||
+        final match =
+            (a['nombre'] as String).toLowerCase().contains(q) ||
             (a['apellidos'] as String).toLowerCase().contains(q) ||
             (a['email'] as String).toLowerCase().contains(q);
         return match;
@@ -259,10 +279,10 @@ _ciclos = _misClases.map((c) => c['ciclo'] as String).toSet().toList();
 
   @override
   Widget build(BuildContext context) {
-final r = Responsive(context);
-final textSize = r.dp(3.6).clamp(13, 18).toDouble();
-final titleSize = r.dp(4.5).clamp(16, 22).toDouble();
-
+    final r = Responsive(context);
+    // ✅ CAMBIO: Aplicado clamp()
+    final textSize = r.dp(3.6).clamp(13, 16).toDouble();
+    final titleSize = r.dp(4.5).clamp(16, 20).toDouble();
 
     // Si no es profesor: mostrar mensaje
     if (!_loading && !_isProfessor) {
@@ -286,112 +306,162 @@ final titleSize = r.dp(4.5).clamp(16, 22).toDouble();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
-        title: Text('Control de alumnos', style: TextStyle(fontSize: titleSize, color: AppTheme.backgroundColor)),
+        title: Text(
+          'Control de alumnos',
+          style: TextStyle(
+            fontSize: titleSize,
+            color: AppTheme.backgroundColor,
+          ),
+        ),
         iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _refreshAll,
             tooltip: 'Refrescar',
-          )
+          ),
         ],
       ),
       drawer: const CustomDrawer(),
       body: Padding(
-        padding: EdgeInsets.all(r.wp(3)),
+        // ✅ CAMBIO: Aplicado clamp()
+        padding: EdgeInsets.all(r.wp(3).clamp(12, 20)),
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Controles y filtros ---
-                  Row(
+                  // ✅ CAMBIO: Reemplazado Rows por Wrap
+                  Wrap(
+                    spacing: r.wp(2).clamp(10, 16), // Espacio horizontal
+                    runSpacing: r.hp(1.5).clamp(10, 14), // Espacio vertical
                     children: [
-                      Expanded(
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 250,
+                          maxWidth: 350,
+                        ),
                         child: DropdownButtonFormField<String>(
                           value: _filtroClaseId,
-                          decoration: AppTheme.inputDecoration('Clase (título)'),
+                          decoration: AppTheme.inputDecoration(
+                            'Clase (título)',
+                          ),
                           items: [
-                            const DropdownMenuItem<String>(value: null, child: Text('Todas las clases')),
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Todas las clases'),
+                            ),
                             ..._misClases.map((c) {
                               return DropdownMenuItem<String>(
                                 value: c['id'] as String,
-                                child: Text('${c['titulo']} (${c['institucion']})'),
+                                child: Text(
+                                  '${c['titulo']} (${c['institucion']})',
+                                ),
                               );
                             }).toList(),
                           ],
                           onChanged: (v) => _onFiltroClaseChanged(v),
                         ),
                       ),
-                      SizedBox(width: r.wp(2)),
-                      Expanded(
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 250,
+                          maxWidth: 350,
+                        ),
                         child: DropdownButtonFormField<String>(
                           value: _filtroInstitucion,
                           decoration: AppTheme.inputDecoration('Institución'),
                           items: [
-                            const DropdownMenuItem<String>(value: null, child: Text('Todas')),
-                            ..._instituciones.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Todas'),
+                            ),
+                            ..._instituciones.map(
+                              (i) => DropdownMenuItem(value: i, child: Text(i)),
+                            ),
                           ],
                           onChanged: (v) {
                             setState(() => _filtroInstitucion = v);
                           },
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: r.hp(1)),
-
-                  Row(
-                    children: [
-                      Expanded(
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 250,
+                          maxWidth: 350,
+                        ),
                         child: DropdownButtonFormField<String>(
                           value: _filtroCarrera,
                           decoration: AppTheme.inputDecoration('Carrera'),
                           items: [
-                            const DropdownMenuItem<String>(value: null, child: Text('Todas')),
-                            ..._carreras.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Todas'),
+                            ),
+                            ..._carreras.map(
+                              (c) => DropdownMenuItem(value: c, child: Text(c)),
+                            ),
                           ],
                           onChanged: (v) {
                             setState(() => _filtroCarrera = v);
                           },
                         ),
                       ),
-                      SizedBox(width: r.wp(2)),
-                      Expanded(
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 250,
+                          maxWidth: 350,
+                        ),
                         child: DropdownButtonFormField<String>(
                           value: _filtroSemestre,
                           decoration: AppTheme.inputDecoration('Semestre'),
                           items: [
-                            const DropdownMenuItem<String>(value: null, child: Text('Todos')),
-                            ..._semestres.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Todos'),
+                            ),
+                            ..._semestres.map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)),
+                            ),
                           ],
                           onChanged: (v) {
                             setState(() => _filtroSemestre = v);
                           },
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: r.hp(1)),
-                  Row(
-                    children: [
-                      Expanded(
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 250,
+                          maxWidth: 350,
+                        ),
                         child: DropdownButtonFormField<String>(
                           value: _filtroCiclo,
-                          decoration: AppTheme.inputDecoration('Periodo (Ciclo)'),
+                          decoration: AppTheme.inputDecoration(
+                            'Periodo (Ciclo)',
+                          ),
                           items: [
-                            const DropdownMenuItem<String>(value: null, child: Text('Todos')),
-                            ..._ciclos.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Todos'),
+                            ),
+                            ..._ciclos.map(
+                              (c) => DropdownMenuItem(value: c, child: Text(c)),
+                            ),
                           ],
                           onChanged: (v) {
                             setState(() => _filtroCiclo = v);
                           },
                         ),
                       ),
-                      SizedBox(width: r.wp(2)),
-                      Expanded(
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 250,
+                          maxWidth: 350,
+                        ),
                         child: TextField(
-                          decoration: AppTheme.inputDecoration('Buscar alumno (nombre/apellidos/email)'),
+                          decoration: AppTheme.inputDecoration(
+                            'Buscar alumno (nombre/apellidos/email)',
+                          ),
                           onChanged: (v) {
                             _onBuscarChanged(v);
                           },
@@ -400,19 +470,30 @@ final titleSize = r.dp(4.5).clamp(16, 22).toDouble();
                     ],
                   ),
 
-                  SizedBox(height: r.hp(2)),
+                  // ✅ CAMBIO: Aplicado clamp()
+                  SizedBox(height: r.hp(2).clamp(16, 24)),
 
                   // --- Estadísticas ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Clases totales: ${_misClases.length}', style: TextStyle(fontSize: textSize)),
-                      Text('Clases visibles: ${_clasesFiltradas().length}', style: TextStyle(fontSize: textSize)),
-                      Text('Alumnos (clase seleccionada): $_totalAlumnos', style: TextStyle(fontSize: textSize)),
+                      Text(
+                        'Clases totales: ${_misClases.length}',
+                        style: TextStyle(fontSize: textSize),
+                      ),
+                      Text(
+                        'Clases visibles: ${_clasesFiltradas().length}',
+                        style: TextStyle(fontSize: textSize),
+                      ),
+                      Text(
+                        'Alumnos (clase seleccionada): $_totalAlumnos',
+                        style: TextStyle(fontSize: textSize),
+                      ),
                     ],
                   ),
 
-                  SizedBox(height: r.hp(1)),
+                  // ✅ CAMBIO: Aplicado clamp()
+                  SizedBox(height: r.hp(1).clamp(8, 12)),
 
                   // --- Tabla de alumnos ---
                   Expanded(
@@ -420,9 +501,14 @@ final titleSize = r.dp(4.5).clamp(16, 22).toDouble();
                       decoration: BoxDecoration(
                         color: AppTheme.backgroundColor,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: AppTheme.primaryColor.withOpacity(0.08), blurRadius: 6)],
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryColor.withOpacity(0.08),
+                            blurRadius: 6,
+                          ),
+                        ],
                       ),
-                      padding: EdgeInsets.all(r.wp(2)),
+                      padding: EdgeInsets.all(r.wp(2).clamp(8, 16)),
                       child: Column(
                         children: [
                           // Tabla encabezado
@@ -434,22 +520,76 @@ final titleSize = r.dp(4.5).clamp(16, 22).toDouble();
                                       style: TextStyle(fontSize: textSize),
                                     ),
                                   )
+                                // ✅ CAMBIO: Añadido SingleChildScrollView horizontal
                                 : SingleChildScrollView(
-                                    child: DataTable(
-                                      headingRowColor: MaterialStateProperty.all(AppTheme.primaryColor),
-                                      headingTextStyle: TextStyle(color: AppTheme.backgroundColor, fontWeight: FontWeight.bold),
-                                      columns: [
-                                        DataColumn(label: Text('Nombre', style: TextStyle(fontSize: textSize))),
-                                        DataColumn(label: Text('Apellidos', style: TextStyle(fontSize: textSize))),
-                                        DataColumn(label: Text('Email', style: TextStyle(fontSize: textSize))),
-                                      ],
-                                      rows: _alumnosPagina.map((a) {
-                                        return DataRow(cells: [
-                                          DataCell(Text(a['nombre'] ?? '-', style: TextStyle(fontSize: textSize))),
-                                          DataCell(Text(a['apellidos'] ?? '-', style: TextStyle(fontSize: textSize))),
-                                          DataCell(Text(a['email'] ?? '-', style: TextStyle(fontSize: textSize))),
-                                        ]);
-                                      }).toList(),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: DataTable(
+                                        headingRowColor:
+                                            MaterialStateProperty.all(
+                                              AppTheme.primaryColor,
+                                            ),
+                                        headingTextStyle: TextStyle(
+                                          color: AppTheme.backgroundColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        columns: [
+                                          DataColumn(
+                                            label: Text(
+                                              'Nombre',
+                                              style: TextStyle(
+                                                fontSize: textSize,
+                                              ),
+                                            ),
+                                          ),
+                                          DataColumn(
+                                            label: Text(
+                                              'Apellidos',
+                                              style: TextStyle(
+                                                fontSize: textSize,
+                                              ),
+                                            ),
+                                          ),
+                                          DataColumn(
+                                            label: Text(
+                                              'Email',
+                                              style: TextStyle(
+                                                fontSize: textSize,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        rows: _alumnosPagina.map((a) {
+                                          return DataRow(
+                                            cells: [
+                                              DataCell(
+                                                Text(
+                                                  a['nombre'] ?? '-',
+                                                  style: TextStyle(
+                                                    fontSize: textSize,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                Text(
+                                                  a['apellidos'] ?? '-',
+                                                  style: TextStyle(
+                                                    fontSize: textSize,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                Text(
+                                                  a['email'] ?? '-',
+                                                  style: TextStyle(
+                                                    fontSize: textSize,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      ),
                                     ),
                                   ),
                           ),
@@ -457,27 +597,47 @@ final titleSize = r.dp(4.5).clamp(16, 22).toDouble();
                           // Paginador simple
                           if (_alumnos.isNotEmpty)
                             Padding(
-                              padding: EdgeInsets.only(top: r.hp(1)),
+                              // ✅ CAMBIO: Aplicado clamp()
+                              padding: EdgeInsets.only(
+                                top: r.hp(1).clamp(8, 12),
+                              ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Mostrando ${_alumnosPagina.length} de ${_alumnos.length}', style: TextStyle(fontSize: textSize - 1)),
+                                  Text(
+                                    'Mostrando ${_alumnosPagina.length} de ${_alumnos.length}',
+                                    style: TextStyle(fontSize: textSize - 1),
+                                  ),
                                   Row(
                                     children: [
                                       IconButton(
-                                        onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                                        onPressed: _currentPage > 0
+                                            ? () =>
+                                                  setState(() => _currentPage--)
+                                            : null,
                                         icon: const Icon(Icons.arrow_back_ios),
                                       ),
-                                      Text('${_currentPage + 1}', style: TextStyle(fontSize: textSize)),
+                                      Text(
+                                        '${_currentPage + 1}',
+                                        style: TextStyle(fontSize: textSize),
+                                      ),
                                       IconButton(
-                                        onPressed: (_currentPage + 1) * _rowsPerPage < _alumnos.length ? () => setState(() => _currentPage++) : null,
-                                        icon: const Icon(Icons.arrow_forward_ios),
+                                        onPressed:
+                                            (_currentPage + 1) * _rowsPerPage <
+                                                _alumnos.length
+                                            ? () =>
+                                                  setState(() => _currentPage++)
+                                            : null,
+                                        icon: const Icon(
+                                          Icons.arrow_forward_ios,
+                                        ),
                                       ),
                                     ],
-                                  )
+                                  ),
                                 ],
                               ),
-                            )
+                            ),
                         ],
                       ),
                     ),

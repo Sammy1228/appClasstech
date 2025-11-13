@@ -15,7 +15,6 @@ class PerfilScreen extends StatefulWidget {
   State<PerfilScreen> createState() => _PerfilScreenState();
 }
 
-
 class _PerfilScreenState extends State<PerfilScreen> {
   //controladores
   final TextEditingController _nombreController = TextEditingController();
@@ -28,7 +27,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   bool _isSaving = false;
   bool _datosCargados = false;
 
-   @override
+  @override
   void initState() {
     super.initState();
     _forzarCargaDatos();
@@ -49,7 +48,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       });
     }
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -73,7 +72,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     _passwordController.text = auth.password;
   }
 
-
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<Authentication>(context);
@@ -96,9 +94,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
           iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
         ),
-        body: const Center(
-          child: Text("Inicia sesión para ver tu perfil."),
-        ),
+        body: const Center(child: Text("Inicia sesión para ver tu perfil.")),
       );
     }
 
@@ -116,51 +112,71 @@ class _PerfilScreenState extends State<PerfilScreen> {
       backgroundColor: AppTheme.backgroundColor,
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(
-            horizontal: responsive.horizontalPadding, vertical: 20),
+          horizontal: responsive.horizontalPadding,
+          vertical: 20,
+        ),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: responsive.fieldWidth),
+            // ✅ CAMBIO: maxWidth fijo para el formulario
+            constraints: BoxConstraints(maxWidth: 700),
             child: Column(
               children: [
-                SizedBox(height: responsive.size.height * 0.04),
+                SizedBox(height: (responsive.size.height * 0.04).clamp(15, 30)),
 
                 // 🧑 Avatar de perfil
                 CircleAvatar(
-                  radius: responsive.size.width * 0.15,
+                  // ✅ CAMBIO: Añadido clamp
+                  radius: (responsive.size.width * 0.15).clamp(50, 80),
                   backgroundColor: AppTheme.secondaryColor.withOpacity(0.7),
                   child: Text(
                     _getIniciales(auth.nombre, auth.apellidos),
-                    style: const TextStyle(
-                      fontSize: 40,
+                    style: TextStyle(
+                      // ✅ CAMBIO: Añadido clamp
+                      fontSize: (responsive.size.width * 0.1).clamp(30, 45),
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                SizedBox(height: responsive.size.height * 0.04),
+                SizedBox(height: (responsive.size.height * 0.04).clamp(15, 30)),
 
                 // Campos comunes
                 _buildTextField("Nombres", _nombreController),
-                SizedBox(height: responsive.size.height * 0.02),
+                SizedBox(height: (responsive.size.height * 0.02).clamp(10, 16)),
                 _buildTextField("Apellidos", _apellidosController),
-                SizedBox(height: responsive.size.height * 0.02),
+                SizedBox(height: (responsive.size.height * 0.02).clamp(10, 16)),
 
                 if (auth.tipoUsuario == "profesor") ...[
-                  _buildInstitucionesList(context, auth),
-                  SizedBox(height: responsive.size.height * 0.02),
+                  // ✅ CAMBIO: Pasado 'responsive'
+                  _buildInstitucionesList(context, auth, responsive),
+                  SizedBox(
+                    height: (responsive.size.height * 0.02).clamp(10, 16),
+                  ),
                   _buildTextField("Correo", _correoController),
-                  SizedBox(height: responsive.size.height * 0.02),
-                  _buildTextField("Contraseña", _passwordController,
-                      obscure: true),
+                  SizedBox(
+                    height: (responsive.size.height * 0.02).clamp(10, 16),
+                  ),
+                  _buildTextField(
+                    "Contraseña",
+                    _passwordController,
+                    obscure: true,
+                  ),
                 ] else if (auth.tipoUsuario == "alumno") ...[
                   _buildTextField("Correo", _correoController),
-                  SizedBox(height: responsive.size.height * 0.02),
-                  SizedBox(height: responsive.size.height * 0.02),
-                  _buildTextField("Contraseña", _passwordController,
-                      obscure: true),
+                  SizedBox(
+                    height: (responsive.size.height * 0.02).clamp(10, 16),
+                  ),
+                  SizedBox(
+                    height: (responsive.size.height * 0.02).clamp(10, 16),
+                  ),
+                  _buildTextField(
+                    "Contraseña",
+                    _passwordController,
+                    obscure: true,
+                  ),
                 ],
 
-                SizedBox(height: responsive.size.height * 0.04),
+                SizedBox(height: (responsive.size.height * 0.04).clamp(20, 30)),
 
                 ElevatedButton(
                   onPressed: _isSaving ? null : () => _guardarCambios(auth),
@@ -170,17 +186,22 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     padding: EdgeInsets.symmetric(
-                      vertical: responsive.size.height * 0.018,
-                      horizontal: responsive.size.width * 0.1,
+                      // ✅ CAMBIO: Añadido clamp
+                      vertical: (responsive.size.height * 0.018).clamp(14, 18),
+                      horizontal: (responsive.size.width * 0.1).clamp(30, 50),
                     ),
                   ),
                   child: _isSaving
                       ? const CircularProgressIndicator(
-                          color: AppTheme.backgroundColor)
-                      : const Text(
+                          color: AppTheme.backgroundColor,
+                        )
+                      : Text(
                           "Guardar",
                           style: TextStyle(
-                              fontSize: 14, color: AppTheme.backgroundColor),
+                            // ✅ CAMBIO: Añadido clamp
+                            fontSize: responsive.dp(3.5).clamp(14, 16),
+                            color: AppTheme.backgroundColor,
+                          ),
                         ),
                 ),
               ],
@@ -191,8 +212,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller,
-      {bool obscure = false}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool obscure = false,
+  }) {
     return TextField(
       controller: controller,
       obscureText: obscure,
@@ -200,161 +224,214 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-Widget _buildInstitucionesList(BuildContext context, Authentication auth) {
-  final instituciones = auth.instituciones;
+  // ✅ CAMBIO: Añadido Responsive y clamp() a fuentes
+  Widget _buildInstitucionesList(
+    BuildContext context,
+    Authentication auth,
+    Responsive responsive,
+  ) {
+    final instituciones = auth.instituciones;
 
-  return InputDecorator(
-    decoration: AppTheme.inputDecoration("Instituciones registradas"),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            icon: const Icon(Icons.add, color: AppTheme.primaryColor),
-            label: const Text("Agregar institución",
-                style: TextStyle(color: AppTheme.primaryColor)),
-            onPressed: () => _mostrarDialogoAgregar(context, auth),
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (instituciones.isEmpty)
-          const Text("No hay instituciones registradas",
-              style: TextStyle(color: Colors.grey))
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: instituciones.length,
-            separatorBuilder: (_, __) =>
-                const Divider(height: 8, color: Colors.grey),
-            itemBuilder: (context, index) {
-              final institucion = instituciones[index];
-              final estado = institucion['estado'];
-              final nombre = institucion['nombre'];
-
-return ListTile(
-  dense: true,
-  contentPadding: EdgeInsets.zero,
-  leading: const Icon(Icons.school, color: AppTheme.primaryColor),
-  title: Text(
-    nombre,
-    style: TextStyle(
-      fontSize: 14,
-      color: estado == 'inactivo' ? Colors.grey : Colors.black,
-      decoration: estado == 'inactivo'
-          ? TextDecoration.lineThrough
-          : TextDecoration.none,
-    ),
-  ),
-  trailing: estado == 'activo'
-      ? IconButton(
-          icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
-          onPressed: () async {
-            final confirmar = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Desactivar institución'),
-                content: const Text('¿Deseas marcar esta institución como inactiva?'),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar')),
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Aceptar')),
-                ],
+    return InputDecorator(
+      decoration: AppTheme.inputDecoration("Instituciones registradas"),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              icon: const Icon(Icons.add, color: AppTheme.primaryColor),
+              label: Text(
+                "Agregar institución",
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontSize: responsive.dp(3.5).clamp(14, 16),
+                ),
               ),
-            );
-            if (confirmar == true) {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                await auth.desactivarInstitucion(user.uid, institucion['id']);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Institución '$nombre' marcada como inactiva.")),
-                );
-              }
-            }
-          },
-        )
-      : IconButton(
-          icon: const Icon(Icons.autorenew, color: Colors.green),
-          onPressed: () async {
-            final confirmar = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Activar institución'),
-                content: const Text('¿Deseas volver a activar esta institución?'),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar')),
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Aceptar')),
-                ],
-              ),
-            );
-            if (confirmar == true) {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                await auth.activarInstitucion(user.uid, institucion['id']);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Institución '$nombre' activada correctamente.")),
-                );
-              }
-            }
-          },
-        ),
-);
-            },
+              onPressed: () => _mostrarDialogoAgregar(context, auth),
+            ),
           ),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 8),
+          if (instituciones.isEmpty)
+            const Text(
+              "No hay instituciones registradas",
+              style: TextStyle(color: Colors.grey),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: instituciones.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 8, color: Colors.grey),
+              itemBuilder: (context, index) {
+                final institucion = instituciones[index];
+                final estado = institucion['estado'];
+                final nombre = institucion['nombre'];
 
-void _mostrarDialogoAgregar(BuildContext context, Authentication auth) {
-  _nuevaInstitucionController.clear();
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text("Agregar institución"),
-        content: TextField(
-          controller: _nuevaInstitucionController,
-          decoration: const InputDecoration(
-            hintText: "Nombre de la institución",
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor),
-            onPressed: () async {
-              final nombre = _nuevaInstitucionController.text.trim();
-              if (nombre.isNotEmpty) {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  await auth.agregarInstitucion(user.uid, nombre);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content:
-                          Text("Institución '$nombre' agregada correctamente.")));
-                }
-              }
-              Navigator.pop(context);
-            },
-            child: const Text("Agregar"),
-          ),
+                return ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(
+                    Icons.school,
+                    color: AppTheme.primaryColor,
+                  ),
+                  title: Text(
+                    nombre,
+                    style: TextStyle(
+                      fontSize: responsive.dp(3.5).clamp(14, 16),
+                      color: estado == 'inactivo' ? Colors.grey : Colors.black,
+                      decoration: estado == 'inactivo'
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                    ),
+                  ),
+                  trailing: estado == 'activo'
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle_outline,
+                            color: Colors.redAccent,
+                          ),
+                          onPressed: () async {
+                            final confirmar = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Desactivar institución'),
+                                content: const Text(
+                                  '¿Deseas marcar esta institución como inactiva?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text('Aceptar'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmar == true) {
+                              final user = FirebaseAuth.instance.currentUser;
+                              if (user != null) {
+                                await auth.desactivarInstitucion(
+                                  user.uid,
+                                  institucion['id'],
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Institución '$nombre' marcada como inactiva.",
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        )
+                      : IconButton(
+                          icon: const Icon(
+                            Icons.autorenew,
+                            color: Colors.green,
+                          ),
+                          onPressed: () async {
+                            final confirmar = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Activar institución'),
+                                content: const Text(
+                                  '¿Deseas volver a activar esta institución?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text('Aceptar'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmar == true) {
+                              final user = FirebaseAuth.instance.currentUser;
+                              if (user != null) {
+                                await auth.activarInstitucion(
+                                  user.uid,
+                                  institucion['id'],
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Institución '$nombre' activada correctamente.",
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                );
+              },
+            ),
         ],
-      );
-    },
-  );
-}
+      ),
+    );
+  }
+
+  void _mostrarDialogoAgregar(BuildContext context, Authentication auth) {
+    _nuevaInstitucionController.clear();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Agregar institución"),
+          content: TextField(
+            controller: _nuevaInstitucionController,
+            decoration: const InputDecoration(
+              hintText: "Nombre de la institución",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+              ),
+              onPressed: () async {
+                final nombre = _nuevaInstitucionController.text.trim();
+                if (nombre.isNotEmpty) {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    await auth.agregarInstitucion(user.uid, nombre);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Institución '$nombre' agregada correctamente.",
+                        ),
+                      ),
+                    );
+                  }
+                }
+                Navigator.pop(context);
+              },
+              child: const Text("Agregar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _guardarCambios(Authentication auth) async {
     try {
@@ -364,7 +441,7 @@ void _mostrarDialogoAgregar(BuildContext context, Authentication auth) {
 
       // Actualizar datos en Authentication si hay cambios
       if (_correoController.text.trim() != user.email) {
-       // await user.updateEmail(_correoController.text.trim());
+        // await user.updateEmail(_correoController.text.trim());
       }
       if (_passwordController.text.trim().isNotEmpty &&
           _passwordController.text.trim() != auth.password) {
@@ -410,19 +487,19 @@ void _mostrarDialogoAgregar(BuildContext context, Authentication auth) {
         const SnackBar(content: Text("Cambios guardados correctamente.")),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al guardar cambios: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error al guardar cambios: $e")));
     } finally {
       setState(() => _isSaving = false);
     }
   }
 
   String _getIniciales(String nombre, String apellidos) {
-    String inicialNombre =
-        nombre.isNotEmpty ? nombre[0].toUpperCase() : '';
-    String inicialApellido =
-        apellidos.isNotEmpty ? apellidos[0].toUpperCase() : '';
+    String inicialNombre = nombre.isNotEmpty ? nombre[0].toUpperCase() : '';
+    String inicialApellido = apellidos.isNotEmpty
+        ? apellidos[0].toUpperCase()
+        : '';
     return "$inicialNombre$inicialApellido";
   }
 }

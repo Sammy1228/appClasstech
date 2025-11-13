@@ -15,13 +15,12 @@ class CrearActividadPage extends StatefulWidget {
 }
 
 class _CrearActividadPageState extends State<CrearActividadPage> {
-  // Controladores 
+  // Controladores
   final TextEditingController _tituloCtrl = TextEditingController();
   final TextEditingController _descripcionCtrl = TextEditingController();
   final TextEditingController _urlCtrl = TextEditingController();
   final TextEditingController _fechaEntregaCtrl = TextEditingController();
   DateTime? fechaEntrega;
-
 
   String? claseSeleccionada;
   List<String> clasesDelProfesor = [];
@@ -35,7 +34,10 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
 
   // Cargar las clases del profesor desde providers
   Future<void> cargarClases() async {
-    final nombreProfesor = Provider.of<Authentication>(context, listen: false).nombre;
+    final nombreProfesor = Provider.of<Authentication>(
+      context,
+      listen: false,
+    ).nombre;
     final clasesProvider = Provider.of<ProviderClases>(context, listen: false);
     final clases = await clasesProvider.getProfessorClasses(nombreProfesor);
     setState(() {
@@ -57,15 +59,21 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
       ),
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: responsive.horizontalPadding, vertical: 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.horizontalPadding,
+          vertical: 16,
+        ),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: responsive.fieldWidth),
+            // ✅ CAMBIO: maxWidth fijo para el formulario
+            constraints: BoxConstraints(maxWidth: 700),
             child: Column(
               children: [
                 TextField(
                   controller: _tituloCtrl,
-                  decoration: AppTheme.inputDecoration("Título de la actividad"),
+                  decoration: AppTheme.inputDecoration(
+                    "Título de la actividad",
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -85,16 +93,18 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.calendar_today),
                       onPressed: () async {
-                        final DateTime? fechaSeleccionada = await showDatePicker(
-                          context: context,
-                          initialDate: fechaEntrega ?? DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2101),
-                        );
+                        final DateTime? fechaSeleccionada =
+                            await showDatePicker(
+                              context: context,
+                              initialDate: fechaEntrega ?? DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2101),
+                            );
                         if (fechaSeleccionada != null) {
                           setState(() {
                             fechaEntrega = fechaSeleccionada;
-                            _fechaEntregaCtrl.text = "${fechaSeleccionada.day}/${fechaSeleccionada.month}/${fechaSeleccionada.year}";
+                            _fechaEntregaCtrl.text =
+                                "${fechaSeleccionada.day}/${fechaSeleccionada.month}/${fechaSeleccionada.year}";
                           });
                         }
                       },
@@ -106,7 +116,9 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                     ? const CircularProgressIndicator()
                     : DropdownButtonFormField<String>(
                         items: clasesDelProfesor
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                            .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)),
+                            )
                             .toList(),
                         value: claseSeleccionada,
                         onChanged: (value) {
@@ -117,7 +129,6 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                         decoration: AppTheme.inputDecoration("Clase"),
                       ),
                 const SizedBox(height: 20),
-
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.secondaryColor,
@@ -126,18 +137,27 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                     ),
                   ),
                   onPressed: () async {
-                    if (_tituloCtrl.text.trim().isEmpty || _descripcionCtrl.text.trim().isEmpty || claseSeleccionada == null || fechaEntrega == null) {
+                    if (_tituloCtrl.text.trim().isEmpty ||
+                        _descripcionCtrl.text.trim().isEmpty ||
+                        claseSeleccionada == null ||
+                        fechaEntrega == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Por favor completa todos los campos")),
+                        const SnackBar(
+                          content: Text("Por favor completa todos los campos"),
+                        ),
                       );
                       return;
                     }
 
-
-                    final actividadesProvider = Provider.of<ProviderActividades>(context, listen: false);
+                    final actividadesProvider =
+                        Provider.of<ProviderActividades>(
+                          context,
+                          listen: false,
+                        );
 
                     actividadesProvider.setTitulo = _tituloCtrl.text.trim();
-                    actividadesProvider.setDescripcion = _descripcionCtrl.text.trim();
+                    actividadesProvider.setDescripcion = _descripcionCtrl.text
+                        .trim();
                     actividadesProvider.setUrl = _urlCtrl.text.trim();
                     actividadesProvider.setClase = claseSeleccionada ?? "";
                     actividadesProvider.setFechaEntrega = fechaEntrega;
@@ -145,7 +165,9 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                     try {
                       await actividadesProvider.createActivity();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Actividad creada exitosamente")),
+                        const SnackBar(
+                          content: Text("Actividad creada exitosamente"),
+                        ),
                       );
 
                       // Limpiar campos - (Luego se va a cambiar a un método)
@@ -153,20 +175,16 @@ class _CrearActividadPageState extends State<CrearActividadPage> {
                       _descripcionCtrl.clear();
                       _urlCtrl.clear();
                       _fechaEntregaCtrl.clear();
-                      fechaEntrega = null; 
-
+                      fechaEntrega = null;
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error: $e")),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text("Error: $e")));
                     }
                   },
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                    child: Text(
-                      "Crear",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: Text("Crear", style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

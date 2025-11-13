@@ -28,8 +28,10 @@ class _ClasesScreenState extends State<ClasesScreen> {
 
   void cargarDatos() async {
     final user = FirebaseAuth.instance.currentUser;
-    final tipoUsuario =
-        Provider.of<Authentication>(context, listen: false).tipoUsuario;
+    final tipoUsuario = Provider.of<Authentication>(
+      context,
+      listen: false,
+    ).tipoUsuario;
     final provider = Provider.of<ProviderClases>(context, listen: false);
 
     try {
@@ -60,7 +62,9 @@ class _ClasesScreenState extends State<ClasesScreen> {
                 "id": doc.id,
                 "title": data['titulo'] ?? 'Sin título',
                 "desc": data['descripcion'] ?? 'Sin descripción',
-                "color": estado == "activo" ? 0xFFC8E6C9 : 0xFFBDBDBD, // gris si inactiva
+                "color": estado == "activo"
+                    ? 0xFFC8E6C9
+                    : 0xFFBDBDBD, // gris si inactiva
                 "estado": estado,
               });
             }
@@ -93,7 +97,9 @@ class _ClasesScreenState extends State<ClasesScreen> {
             Row(
               children: [
                 Text(
-                  mostrarInactivas ? "Ocultar clases inactivas" : "Mostrar clases inactivas",
+                  mostrarInactivas
+                      ? "Ocultar clases inactivas"
+                      : "Mostrar clases inactivas",
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
                 Switch(
@@ -151,128 +157,150 @@ class _ClasesScreenState extends State<ClasesScreen> {
       ),
       drawer: const CustomDrawer(),
       body: Padding(
-        padding: EdgeInsets.all(responsive.wp(3)),
+        padding: EdgeInsets.all(responsive.wp(3).clamp(12, 20)),
         child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isPortrait ? 2 : 3,
-            crossAxisSpacing: responsive.wp(3),
-            mainAxisSpacing: responsive.hp(2),
+          // ✅ CAMBIO: De FixedCrossAxisCount a MaxCrossAxisExtent
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 400, // Ancho máx de cada tarjeta
+            crossAxisSpacing: responsive.wp(3).clamp(12, 20),
+            mainAxisSpacing: responsive.hp(2).clamp(12, 20),
             childAspectRatio: isPortrait ? 1 : 1.2,
           ),
           itemCount: clases.length,
           itemBuilder: (context, index) {
             final clase = clases[index];
-            return _claseCard(clase, tipoUsuario);
+            // ✅ CAMBIO: Pasamos 'responsive' a _claseCard
+            return _claseCard(clase, tipoUsuario, responsive);
           },
         ),
       ),
     );
   }
 
-Widget _claseCard(Map<String, dynamic> clase, String tipoUsuario) {
-  final provider = Provider.of<ProviderClases>(context, listen: false);
-  final index = clases.indexOf(clase);
+  // ✅ CAMBIO: Añadido Responsive r y clamp() a fuentes
+  Widget _claseCard(
+    Map<String, dynamic> clase,
+    String tipoUsuario,
+    Responsive r,
+  ) {
+    final provider = Provider.of<ProviderClases>(context, listen: false);
+    final index = clases.indexOf(clase);
 
-  // Color base (si está inactiva, será gris)
-  final baseColor = clase["estado"] == "inactivo"
-      ? Colors.grey
-      : AppTheme.claseColors[index % AppTheme.claseColors.length];
+    // Color base (si está inactiva, será gris)
+    final baseColor = clase["estado"] == "inactivo"
+        ? Colors.grey
+        : AppTheme.claseColors[index % AppTheme.claseColors.length];
 
-  // Función para oscurecer el color de la franja superior
-  Color darken(Color c, [double amount = 0.1]) {
-    final hsl = HSLColor.fromColor(c);
-    final hslDark = hsl.withLightness(
-      (hsl.lightness - amount).clamp(0.0, 1.0),
-    );
-    return hslDark.toColor();
-  }
+    // Función para oscurecer el color de la franja superior
+    Color darken(Color c, [double amount = 0.1]) {
+      final hsl = HSLColor.fromColor(c);
+      final hslDark = hsl.withLightness(
+        (hsl.lightness - amount).clamp(0.0, 1.0),
+      );
+      return hslDark.toColor();
+    }
 
-  return Container(
-    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-    decoration: BoxDecoration(
-      color: baseColor,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 4)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Encabezado con color más oscuro e ícono
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: darken(baseColor, 0.08),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Row(
-            children: [
-              AppTheme.themedIcon(Icons.book, color: Colors.white, size: 32),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  clase["title"] ?? 'Sin título',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Descripción
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            clase["desc"] ?? 'Sin descripción',
-            style: const TextStyle(fontSize: 15, color: Colors.black87),
-          ),
-        ),
-
-        // Si es profesor, mostrar switch de estado
-        if (tipoUsuario == "profesor")
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: baseColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Encabezado con color más oscuro e ícono
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: darken(baseColor, 0.05),
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(20)),
+              color: darken(baseColor, 0.08),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  clase["estado"] == "activo"
-                      ? "Desactivar clase"
-                      : "Activar clase",
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                AppTheme.themedIcon(
+                  Icons.book,
+                  color: Colors.white,
+                  size: r.dp(6).clamp(28, 34),
                 ),
-                Switch(
-                  value: clase["estado"] == "activo",
-                  onChanged: (value) async {
-                    final nuevoEstado = value ? "activo" : "inactivo";
-                    await provider.cambiarEstadoClase(clase["id"], nuevoEstado);
-                    cargarDatos(); // recarga la lista de clases
-                  },
-                  activeColor: Colors.white,
-                  inactiveThumbColor: Colors.white54,
-                  inactiveTrackColor: Colors.black26,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    clase["title"] ?? 'Sin título',
+                    style: TextStyle(
+                      fontSize: r.dp(4.5).clamp(16, 19), // ✅ CAMBIO
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-      ],
-    ),
-  );
-}
 
+          // Descripción
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              clase["desc"] ?? 'Sin descripción',
+              style: TextStyle(
+                fontSize: r.dp(3.8).clamp(14, 16), // ✅ CAMBIO
+                color: Colors.black87,
+              ),
+            ),
+          ),
 
-
+          // Si es profesor, mostrar switch de estado
+          if (tipoUsuario == "profesor")
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              decoration: BoxDecoration(
+                color: darken(baseColor, 0.05),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    clase["estado"] == "activo"
+                        ? "Desactivar clase"
+                        : "Activar clase",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: r.dp(3.8).clamp(14, 16), // ✅ CAMBIO
+                    ),
+                  ),
+                  Switch(
+                    value: clase["estado"] == "activo",
+                    onChanged: (value) async {
+                      final nuevoEstado = value ? "activo" : "inactivo";
+                      await provider.cambiarEstadoClase(
+                        clase["id"],
+                        nuevoEstado,
+                      );
+                      cargarDatos(); // recarga la lista de clases
+                    },
+                    activeColor: Colors.white,
+                    inactiveThumbColor: Colors.white54,
+                    inactiveTrackColor: Colors.black26,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _dialogButton(
     BuildContext context,
@@ -292,7 +320,13 @@ Widget _claseCard(Map<String, dynamic> clase, String tipoUsuario) {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: Text(text, style: TextStyle(fontSize: responsive.scale(0.04, 0.03))),
+        // ✅ CAMBIO: Añadido clamp
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: responsive.scale(0.04, 0.03).clamp(14, 18),
+          ),
+        ),
       ),
     );
   }

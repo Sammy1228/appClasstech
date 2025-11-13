@@ -70,7 +70,10 @@ class ActividadPage extends StatelessWidget {
             backgroundColor: AppTheme.primaryColor,
             title: Text(
               actividadData['titulo'] ?? 'Sin Título', // 👈 DATO REAL
-              style: TextStyle(fontSize: responsive.titleFontSize * 0.6),
+              style: TextStyle(
+                // ✅ CAMBIO: Añadido clamp
+                fontSize: (responsive.titleFontSize * 0.6).clamp(18, 22),
+              ),
             ),
             actions: [
               IconButton(
@@ -83,157 +86,189 @@ class ActividadPage extends StatelessWidget {
           ),
           // El drawer no es necesario en esta vista de detalle
           // drawer: const Drawer(),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: responsive.horizontalPadding,
-              vertical: responsive.verticalPadding,
-            ),
-            child: Column(
-              children: [
-                // Caja amarilla
-                Container(
-                  width: responsive.fieldWidth,
-                  padding: EdgeInsets.all(responsive.wp(4)),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFE5B4),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 6),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        fechaFormateada, // 👈 DATO REAL
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: responsive.scale(0.045, 0.03),
-                        ),
-                      ),
-                      SizedBox(height: responsive.hp(1)),
-                      Text(
-                        actividadData['descripcion'] ??
-                            'Sin descripción.', // 👈 DATO REAL
-                        style: AppTheme.bodyText.copyWith(
-                          fontSize: responsive.scale(0.04, 0.03),
-                        ),
-                      ),
-                    ],
-                  ),
+          // ✅ CAMBIO: Añadido Center y ConstrainedBox
+          body: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 700), // Ancho de formulario
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.horizontalPadding,
+                  vertical: responsive.verticalPadding,
                 ),
+                child: Column(
+                  children: [
+                    // Caja amarilla
+                    Container(
+                      // width: responsive.fieldWidth, // 👈 REMOVIDO
+                      padding: EdgeInsets.all(
+                        responsive.wp(4).clamp(16, 24),
+                      ), // ✅ CAMBIO
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE5B4),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 6),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fechaFormateada, // 👈 DATO REAL
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              // ✅ CAMBIO: Añadido clamp
+                              fontSize: responsive
+                                  .scale(0.045, 0.03)
+                                  .clamp(16, 20),
+                            ),
+                          ),
+                          // ✅ CAMBIO: Añadido clamp
+                          SizedBox(height: responsive.hp(1).clamp(8, 12)),
+                          Text(
+                            actividadData['descripcion'] ??
+                                'Sin descripción.', // 👈 DATO REAL
+                            style: AppTheme.bodyText.copyWith(
+                              // ✅ CAMBIO: Añadido clamp
+                              fontSize: responsive
+                                  .scale(0.04, 0.03)
+                                  .clamp(14, 17),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // ✅ CAMBIO: Añadido clamp
+                    SizedBox(height: responsive.hp(2).clamp(16, 24)),
 
-                SizedBox(height: responsive.hp(2)),
+                    // Campo URL (ahora muestra la URL y es de solo lectura)
+                    TextField(
+                      // width: responsive.fieldWidth, // 👈 REMOVIDO
+                      controller: urlController,
+                      readOnly: true, // El alumno no debería editar esto
+                      decoration: AppTheme.inputDecoration("URL de contenido")
+                          .copyWith(
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.link),
+                              onPressed: () {
+                                // TODO: Lógica para abrir el enlace
+                              },
+                            ),
+                          ),
+                    ),
+                    // ✅ CAMBIO: Añadido clamp
+                    SizedBox(height: responsive.hp(2).clamp(16, 24)),
 
-                // Campo URL (ahora muestra la URL y es de solo lectura)
-                SizedBox(
-                  width: responsive.fieldWidth,
-                  child: TextField(
-                    controller: urlController,
-                    readOnly: true, // El alumno no debería editar esto
-                    decoration: AppTheme.inputDecoration("URL de contenido")
-                        .copyWith(
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.link),
-                            onPressed: () {
-                              // TODO: Lógica para abrir el enlace
-                            },
+                    // Subida de archivos (Esto es para la entrega del alumno)
+                    GestureDetector(
+                      onTap: () {
+                        // TODO: Lógica para subir archivos
+                      },
+                      child: Container(
+                        // width: responsive.fieldWidth, // 👈 REMOVIDO
+                        padding: EdgeInsets.all(
+                          responsive.wp(8).clamp(24, 40),
+                        ), // ✅ CAMBIO
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                          ), // Borde sutil
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black12, blurRadius: 4),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            AppTheme.themedIcon(
+                              Icons.upload_file,
+                              // ✅ CAMBIO: Añadido clamp
+                              size: responsive.scale(0.15, 0.08).clamp(50, 70),
+                            ),
+                            // ✅ CAMBIO: Añadido clamp
+                            SizedBox(height: responsive.hp(1).clamp(8, 12)),
+                            Text(
+                              "Adjunta tus archivos",
+                              style: TextStyle(
+                                // ✅ CAMBIO: Añadido clamp
+                                fontSize: responsive
+                                    .scale(0.04, 0.03)
+                                    .clamp(14, 17),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // ✅ CAMBIO: Añadido clamp
+                    SizedBox(height: responsive.hp(3).clamp(20, 30)),
+
+                    // Botón enviar
+                    SizedBox(
+                      // ✅ CAMBIO: Añadido clamp
+                      width: (responsive.fieldWidth * 0.7).clamp(250, 500),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.secondaryColor,
+                          padding: EdgeInsets.symmetric(
+                            // ✅ CAMBIO: Añadido clamp
+                            horizontal: responsive.wp(6).clamp(24, 36),
+                            vertical: responsive.hp(1.5).clamp(12, 18),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                  ),
-                ),
-
-                SizedBox(height: responsive.hp(2)),
-
-                // Subida de archivos (Esto es para la entrega del alumno)
-                GestureDetector(
-                  onTap: () {
-                    // TODO: Lógica para subir archivos
-                  },
-                  child: Container(
-                    width: responsive.fieldWidth,
-                    padding: EdgeInsets.all(responsive.wp(8)),
-                    decoration: BoxDecoration(
-                      color: AppTheme.backgroundColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                      ), // Borde sutil
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black12, blurRadius: 4),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        AppTheme.themedIcon(
-                          Icons.upload_file,
-                          size: responsive.scale(0.15, 0.08),
-                        ),
-                        SizedBox(height: responsive.hp(1)),
-                        Text(
-                          "Adjunta tus archivos",
+                        onPressed: () {
+                          // TODO: Lógica para enviar la tarea
+                        },
+                        child: Text(
+                          "Entregar Tarea",
                           style: TextStyle(
-                            fontSize: responsive.scale(0.04, 0.03),
+                            color: AppTheme.backgroundColor,
+                            // ✅ CAMBIO: Añadido clamp
+                            fontSize: responsive
+                                .scale(0.045, 0.03)
+                                .clamp(15, 19),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    // ✅ CAMBIO: Añadido clamp
+                    SizedBox(height: responsive.hp(3).clamp(20, 30)),
+
+                    // Retroalimentación (Esto debería ser condicional)
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.redAccent,
+                        // ✅ CAMBIO: Añadido clamp
+                        radius: responsive.wp(5).clamp(20, 24),
+                        child: Text(
+                          "D",
+                          style: TextStyle(
+                            color: AppTheme.backgroundColor,
+                            // ✅ CAMBIO: Añadido clamp
+                            fontSize: responsive
+                                .scale(0.04, 0.03)
+                                .clamp(14, 17),
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        "Retroalimentación del alumno (opcional)",
+                        // ✅ CAMBIO: Añadido clamp
+                        style: TextStyle(
+                          fontSize: responsive.scale(0.04, 0.03).clamp(14, 17),
+                        ),
+                      ),
+                      onTap: () {
+                        // TODO: Abrir diálogo para escribir retroalimentación
+                      },
+                    ),
+                  ],
                 ),
-
-                SizedBox(height: responsive.hp(3)),
-
-                // Botón enviar
-                SizedBox(
-                  width: responsive.fieldWidth * 0.7,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.secondaryColor,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: responsive.wp(6),
-                        vertical: responsive.hp(1.5),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onPressed: () {
-                      // TODO: Lógica para enviar la tarea
-                    },
-                    child: Text(
-                      "Entregar Tarea",
-                      style: TextStyle(
-                        color: AppTheme.backgroundColor,
-                        fontSize: responsive.scale(0.045, 0.03),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: responsive.hp(3)),
-
-                // Retroalimentación (Esto debería ser condicional)
-                ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.redAccent,
-                    radius: responsive.wp(5),
-                    child: Text(
-                      "D",
-                      style: TextStyle(
-                        color: AppTheme.backgroundColor,
-                        fontSize: responsive.scale(0.04, 0.03),
-                      ),
-                    ),
-                  ),
-                  title: Text(
-                    "Retroalimentación del alumno (opcional)",
-                    style: TextStyle(fontSize: responsive.scale(0.04, 0.03)),
-                  ),
-                  onTap: () {
-                    // TODO: Abrir diálogo para escribir retroalimentación
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         );
