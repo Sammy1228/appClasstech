@@ -2,7 +2,6 @@ import 'package:appzacek/database/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-
 class ProviderClases extends ChangeNotifier {
   String _titulo = "";
   String _descripcion = "";
@@ -71,7 +70,7 @@ class ProviderClases extends ChangeNotifier {
     notifyListeners();
   }
 
-final DatabaseService _dbService = DatabaseService();
+  final DatabaseService _dbService = DatabaseService();
 
   // Crear clase
   Future<void> createClass() async {
@@ -105,43 +104,40 @@ final DatabaseService _dbService = DatabaseService();
     }
   }
 
-  
-
   // Obtener clases del profesor actual
   Future<List<String>> getProfessorClasses(String nombreProfesor) async {
     return await _dbService.obtenerClasesProfesor(nombreProfesor);
   }
 
   // Unirse a clase
-Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
-  final firestore = FirebaseFirestore.instance;
+  Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
+    final firestore = FirebaseFirestore.instance;
 
-  // Buscar clase por código
-  final snapshot = await firestore
-      .collection('clases')
-      .where('codigoAcceso', isEqualTo: codigoClase)
-      .limit(1)
-      .get();
+    // Buscar clase por código
+    final snapshot = await firestore
+        .collection('clases')
+        .where('codigoAcceso', isEqualTo: codigoClase)
+        .limit(1)
+        .get();
 
-  if (snapshot.docs.isEmpty) {
-    return "Clase no encontrada.";
+    if (snapshot.docs.isEmpty) {
+      return "Clase no encontrada.";
+    }
+
+    final clase = snapshot.docs.first.data();
+
+    if (clase['estado'] == 'inactivo') {
+      return "clase_inactiva";
+    }
+
+    final resultado = await _dbService.agregarAlumnoAClase(
+      codigoClase: codigoClase,
+      uidAlumno: uidUsuario,
+    );
+
+    notifyListeners();
+    return resultado;
   }
-
-  final clase = snapshot.docs.first.data();
-
-  if (clase['estado'] == 'inactivo') {
-    return "clase_inactiva";
-  }
-
-  final resultado = await _dbService.agregarAlumnoAClase(
-    codigoClase: codigoClase,
-    uidAlumno: uidUsuario,
-  );
-
-  notifyListeners();
-  return resultado;
-}
-  
 
   Future<void> eliminarClasesPorInstitucion(String institucion) async {
     try {
@@ -153,7 +149,9 @@ Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
           .get();
 
       if (snapshot.docs.isEmpty) {
-        debugPrint("No hay clases para eliminar en la institución '$institucion'.");
+        debugPrint(
+          "No hay clases para eliminar en la institución '$institucion'.",
+        );
         return;
       }
 
@@ -164,7 +162,9 @@ Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
       debugPrint("✅ Clases eliminadas correctamente para '$institucion'");
     } catch (e) {
       debugPrint("⚠️ Error al eliminar clases de '$institucion': $e");
-      throw Exception("No se pudieron eliminar las clases asociadas a la institución.");
+      throw Exception(
+        "No se pudieron eliminar las clases asociadas a la institución.",
+      );
     }
   }
 
@@ -178,7 +178,19 @@ Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
     }
   }
 
-    // ✅ Nuevo método: cambiar estado de clase
+  // 👇 --- MÉTODO NUEVO EN TIEMPO REAL --- 👇
+  Stream<QuerySnapshot> obtenerClasesStream() {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      // .snapshots() devuelve un Stream en tiempo real
+      return firestore.collection('clases').snapshots();
+    } catch (e) {
+      debugPrint("⚠️ Error al obtener stream de clases: $e");
+      throw Exception("No se pudo obtener el stream de clases.");
+    }
+  }
+
+  // ✅ Nuevo método: cambiar estado de clase
   Future<void> cambiarEstadoClase(String claseId, String nuevoEstado) async {
     try {
       await _dbService.actualizarEstadoClase(claseId, nuevoEstado);
@@ -188,4 +200,3 @@ Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
     }
   }
 }
-
