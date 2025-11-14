@@ -2,9 +2,7 @@ import 'package:appzacek/firebase_options.dart';
 import 'package:appzacek/providers/provider_actividades.dart';
 import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:appzacek/providers/provider_clases.dart';
-// --- NUEVO IMPORTE ---
 import 'package:appzacek/providers/provider_entregas.dart';
-// --- FIN NUEVO IMPORTE ---
 import 'package:appzacek/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -17,11 +15,12 @@ import 'config.dart';
 import 'perfil.dart';
 import 'class.dart';
 import 'retroalimentacio.dart';
-
-// --- NUEVAS PANTALLAS ---
 import 'calificar_actividad_page.dart';
 import 'ver_entrega_page.dart';
-// --- FIN NUEVAS PANTALLAS ---
+
+// --- NUEVA IMPORTACIÓN ---
+import 'forgot_password_page.dart';
+// --- FIN NUEVA IMPORTACIÓN ---
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,9 +38,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => Authentication()),
         ChangeNotifierProvider(create: (_) => ProviderClases()),
         ChangeNotifierProvider(create: (_) => ProviderActividades()),
-        // --- NUEVO PROVIDER AÑADIDO ---
         ChangeNotifierProvider(create: (_) => ProviderEntregas()),
-        // --- FIN NUEVO PROVIDER ---
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -56,12 +53,13 @@ class MyApp extends StatelessWidget {
           '/perfil': (context) => const PerfilScreen(),
           '/class': (context) => const ClasesScreen(),
           '/retroalimentacion': (context) => const RetroalimentacionPage(),
-
-          // --- NUEVAS RUTAS (opcional, pero buena práctica) ---
           '/calificar_actividad': (context) =>
               const CalificarActividadPage(actividadId: ''),
           '/ver_entrega': (context) => const VerEntregaPage(entregaId: ''),
-          // --- FIN NUEVAS RUTAS ---
+
+          // --- NUEVA RUTA AÑADIDA ---
+          '/forgot_password': (context) => const ForgotPasswordPage(),
+          // --- FIN NUEVA RUTA ---
         },
         theme: ThemeData(
           useMaterial3: true,

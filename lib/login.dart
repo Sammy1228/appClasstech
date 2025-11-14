@@ -231,6 +231,35 @@ class _LoginState extends State<Login> {
                                 ),
                               ),
                             ),
+
+                            // --- INICIO DE CÓDIGO AÑADIDO ---
+                            SizedBox(height: responsive.screenHeight * 0.02),
+                            Center(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/forgot_password',
+                                  );
+                                },
+                                child: Text(
+                                  "¿Olvidaste tu contraseña?",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize:
+                                        (responsive.isPortrait
+                                                ? responsive.screenWidth * 0.04
+                                                : responsive.screenHeight *
+                                                      0.04)
+                                            .clamp(14, 18),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // --- FIN DE CÓDIGO AÑADIDO ---
                             SizedBox(height: responsive.screenHeight * 0.025),
                             Center(
                               child: GestureDetector(
