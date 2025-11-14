@@ -39,6 +39,25 @@ class _ActividadPageState extends State<ActividadPage> {
   List<PlatformFile> _archivosSeleccionados = [];
   List<String> _nombresArchivos = [];
 
+  // --- INICIO DE LA CORRECCIÓN ---
+  // Variables para guardar los streams y evitar que se re-creen
+  late Stream<DocumentSnapshot> _actividadStream;
+  late Stream<QuerySnapshot> _comentariosStream;
+
+  @override
+  void initState() {
+    super.initState();
+    // Obtenemos el provider (SIN listen)
+    final provider = Provider.of<ProviderActividades>(context, listen: false);
+
+    // Asignamos los streams a las variables de estado UNA SOLA VEZ
+    _actividadStream = provider.obtenerActividadStreamPorId(widget.actividadId);
+    _comentariosStream = provider.getComentariosActividadStream(
+      widget.actividadId,
+    );
+  }
+  // --- FIN DE LA CORRECCIÓN ---
+
   // --- Lógica para seleccionar archivos ---
   Future<void> _pickFiles(BuildContext context) async {
     final entregasProvider = Provider.of<ProviderEntregas>(
@@ -182,10 +201,9 @@ class _ActividadPageState extends State<ActividadPage> {
     final String uidUsuario = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return StreamBuilder<DocumentSnapshot>(
-      // 1. OBTENEMOS EL STREAM DE LA ACTIVIDAD ESPECÍFICA
-      stream: actividadesProvider.obtenerActividadStreamPorId(
-        widget.actividadId,
-      ),
+      // --- CAMBIO AQUÍ: Usamos la variable de estado ---
+      stream: _actividadStream,
+      // --- FIN CAMBIO ---
       builder: (context, snapshotActividad) {
         // --- Manejo de estados de carga/error ---
         if (snapshotActividad.connectionState == ConnectionState.waiting) {
@@ -397,9 +415,9 @@ class _ActividadPageState extends State<ActividadPage> {
 
                     // Lista de comentarios
                     StreamBuilder<QuerySnapshot>(
-                      stream: actividadesProvider.getComentariosActividadStream(
-                        widget.actividadId,
-                      ),
+                      // --- CAMBIO AQUÍ: Usamos la variable de estado ---
+                      stream: _comentariosStream,
+                      // --- FIN CAMBIO ---
                       builder: (context, snapshotComentarios) {
                         if (snapshotComentarios.connectionState ==
                             ConnectionState.waiting) {

@@ -21,6 +21,19 @@ class _RetroalimentacionPageState extends State<RetroalimentacionPage> {
   String? _claseSeleccionadaTitulo;
   final TextEditingController _retroCtrl = TextEditingController();
 
+  // --- INICIO DE LA CORRECCIÓN ---
+  late Stream<QuerySnapshot> _clasesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    // Obtenemos el provider (SIN listen)
+    final clasesProvider = Provider.of<ProviderClases>(context, listen: false);
+    // Asignamos el stream a la variable de estado UNA SOLA VEZ
+    _clasesStream = clasesProvider.obtenerClasesStream();
+  }
+  // --- FIN DE LA CORRECCIÓN ---
+
   // --- Lógica para enviar retroalimentación ---
   Future<void> _enviarRetro(BuildContext context) async {
     final auth = Provider.of<Authentication>(context, listen: false);
@@ -90,7 +103,9 @@ class _RetroalimentacionPageState extends State<RetroalimentacionPage> {
             // --- INICIO DE LÓGICA DE CLASES ---
             // 1. Stream para obtener y filtrar las clases del alumno
             StreamBuilder<QuerySnapshot>(
-              stream: clasesProvider.obtenerClasesStream(),
+              // --- CAMBIO AQUÍ: Usamos la variable de estado ---
+              stream: _clasesStream,
+              // --- FIN CAMBIO ---
               builder: (context, snapshotClases) {
                 if (!snapshotClases.hasData) {
                   return const Center(child: CircularProgressIndicator());
