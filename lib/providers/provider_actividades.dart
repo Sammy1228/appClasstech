@@ -102,4 +102,38 @@ class ProviderActividades extends ChangeNotifier {
       throw Exception("No se pudo obtener el stream de la actividad.");
     }
   }
+
+  // =======================================================
+  // --- INICIO DE NUEVOS MÉTODOS PARA COMENTARIOS ---
+  // =======================================================
+
+  /// Obtiene los comentarios de una actividad
+  Stream<QuerySnapshot> getComentariosActividadStream(String actividadId) {
+    return FirebaseFirestore.instance
+        .collection('actividades')
+        .doc(actividadId)
+        .collection('comentarios')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  /// Envía un comentario a una actividad
+  Future<void> enviarComentarioActividad({
+    required String actividadId,
+    required String uidUsuario,
+    required String nombreUsuario,
+    required String comentario,
+  }) async {
+    try {
+      await _dbService.agregarComentarioActividad(actividadId, {
+        'uidUsuario': uidUsuario,
+        'nombreUsuario': nombreUsuario,
+        'comentario': comentario,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error al enviar comentario: $e");
+      rethrow;
+    }
+  }
 }

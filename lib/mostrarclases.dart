@@ -1,5 +1,9 @@
 import 'package:appzacek/providers/provider_actividades.dart';
 import 'package:appzacek/providers/provider_clases.dart';
+// --- NUEVOS IMPORTES ---
+import 'package:appzacek/providers/provider_autenticacion.dart';
+import 'package:appzacek/calificar_actividad_page.dart';
+// --- FIN NUEVOS IMPORTES ---
 import 'package:appzacek/widgets/custom_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -261,12 +265,28 @@ class MostrarClasePage extends StatelessWidget {
     return GestureDetector(
       // 👈 Añadido para navegar
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ActividadPage(actividadId: actividadDoc.id),
-          ),
-        );
+        // --- INICIO DE LÓGICA MODIFICADA ---
+        final auth = Provider.of<Authentication>(context, listen: false);
+
+        if (auth.tipoUsuario == 'profesor') {
+          // Si es profesor, va a la pantalla de calificar
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  CalificarActividadPage(actividadId: actividadDoc.id),
+            ),
+          );
+        } else {
+          // Si es alumno, va a la pantalla de detalle de actividad
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ActividadPage(actividadId: actividadDoc.id),
+            ),
+          );
+        }
+        // --- FIN DE LÓGICA MODIFICADA ---
       },
       child: Container(
         margin: EdgeInsets.only(bottom: responsive.hp(1.5).clamp(10, 15)),

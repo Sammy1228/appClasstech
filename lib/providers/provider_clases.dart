@@ -111,25 +111,7 @@ class ProviderClases extends ChangeNotifier {
 
   // Unirse a clase
   Future<String> unirseAClase(String codigoClase, String uidUsuario) async {
-    final firestore = FirebaseFirestore.instance;
-
-    // Buscar clase por código
-    final snapshot = await firestore
-        .collection('clases')
-        .where('codigoAcceso', isEqualTo: codigoClase)
-        .limit(1)
-        .get();
-
-    if (snapshot.docs.isEmpty) {
-      return "Clase no encontrada.";
-    }
-
-    final clase = snapshot.docs.first.data();
-
-    if (clase['estado'] == 'inactivo') {
-      return "clase_inactiva";
-    }
-
+    // --- LÓGICA MODIFICADA (Check de estado movido a database.dart) ---
     final resultado = await _dbService.agregarAlumnoAClase(
       codigoClase: codigoClase,
       uidAlumno: uidUsuario,
@@ -208,6 +190,40 @@ class ProviderClases extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       throw Exception("Error al cambiar el estado de la clase: $e");
+    }
+  }
+
+  // =======================================================
+  // --- INICIO DE NUEVOS MÉTODOS PARA RETROALIMENTACIÓN ---
+  // =======================================================
+
+  /// Obtiene la retroalimentación general de UNA clase
+  Stream<QuerySnapshot> getRetroalimentacionClaseStream(String claseId) {
+    return FirebaseFirestore.instance
+        .collection('clases')
+        .doc(claseId)
+        .collection('retroalimentacion')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  /// Envía retroalimentación a una clase
+  Future<void> enviarRetroalimentacionClase({
+    required String claseId,
+    required String uidAlumno,
+    required String nombreAlumno,
+    required String comentario,
+  }) async {
+    try {
+      await _dbService.agregarRetroClase(claseId, {
+        'uidAlumno': uidAlumno,
+        'nombreAlumno': nombreAlumno,
+        'comentario': comentario,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error al enviar retroalimentación: $e");
+      rethrow;
     }
   }
 }
