@@ -8,6 +8,8 @@ import '../theme/app_theme.dart';
 import '../Utils/responsive.dart';
 import 'crearclase.dart';
 import 'crearactividad.dart';
+import '../widgets/clase_card.dart';
+import 'mostrarclases.dart';
 
 class ClasesScreen extends StatefulWidget {
   const ClasesScreen({super.key});
@@ -170,137 +172,64 @@ class _ClasesScreenState extends State<ClasesScreen> {
           itemBuilder: (context, index) {
             final clase = clases[index];
             // ✅ CAMBIO: Pasamos 'responsive' a _claseCard
-            return _claseCard(clase, tipoUsuario, responsive);
+           final color = AppTheme.claseColors[index % AppTheme.claseColors.length];
+
+return ClaseCard(
+  title: clase["title"],
+  description: clase["desc"],
+  color: color,
+  isInactive: clase["estado"] == "inactivo", // 👈 NUEVO
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MostrarClasePage(
+          claseId: clase["id"],
+          titulo: clase["title"],
+          descripcion: clase["desc"],
+        ),
+      ),
+    );
+  },
+  footerWidget: tipoUsuario == "profesor"
+      ? _footerSwitch(clase, responsive)
+      : null,
+);
           },
         ),
       ),
     );
   }
 
-  // ✅ CAMBIO: Añadido Responsive r y clamp() a fuentes
-  Widget _claseCard(
-    Map<String, dynamic> clase,
-    String tipoUsuario,
-    Responsive r,
-  ) {
-    final provider = Provider.of<ProviderClases>(context, listen: false);
-    final index = clases.indexOf(clase);
+Widget _footerSwitch(Map<String, dynamic> clase, Responsive r) {
+  final provider = Provider.of<ProviderClases>(context, listen: false);
 
-    // Color base (si está inactiva, será gris)
-    final baseColor = clase["estado"] == "inactivo"
-        ? Colors.grey
-        : AppTheme.claseColors[index % AppTheme.claseColors.length];
-
-    // Función para oscurecer el color de la franja superior
-    Color darken(Color c, [double amount = 0.1]) {
-      final hsl = HSLColor.fromColor(c);
-      final hslDark = hsl.withLightness(
-        (hsl.lightness - amount).clamp(0.0, 1.0),
-      );
-      return hslDark.toColor();
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: baseColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 4)),
-        ],
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        clase["estado"] == "activo"
+            ? "Desactivar clase"
+            : "Activar clase",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: r.dp(3.8).clamp(14, 16),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Encabezado con color más oscuro e ícono
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: darken(baseColor, 0.08),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
-            ),
-            child: Row(
-              children: [
-                AppTheme.themedIcon(
-                  Icons.book,
-                  color: Colors.white,
-                  size: r.dp(6).clamp(28, 34),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    clase["title"] ?? 'Sin título',
-                    style: TextStyle(
-                      fontSize: r.dp(4.5).clamp(16, 19), // ✅ CAMBIO
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Descripción
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              clase["desc"] ?? 'Sin descripción',
-              style: TextStyle(
-                fontSize: r.dp(3.8).clamp(14, 16), // ✅ CAMBIO
-                color: Colors.black87,
-              ),
-            ),
-          ),
-
-          // Si es profesor, mostrar switch de estado
-          if (tipoUsuario == "profesor")
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              decoration: BoxDecoration(
-                color: darken(baseColor, 0.05),
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(20),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    clase["estado"] == "activo"
-                        ? "Desactivar clase"
-                        : "Activar clase",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: r.dp(3.8).clamp(14, 16), // ✅ CAMBIO
-                    ),
-                  ),
-                  Switch(
-                    value: clase["estado"] == "activo",
-                    onChanged: (value) async {
-                      final nuevoEstado = value ? "activo" : "inactivo";
-                      await provider.cambiarEstadoClase(
-                        clase["id"],
-                        nuevoEstado,
-                      );
-                      cargarDatos(); // recarga la lista de clases
-                    },
-                    activeColor: Colors.white,
-                    inactiveThumbColor: Colors.white54,
-                    inactiveTrackColor: Colors.black26,
-                  ),
-                ],
-              ),
-            ),
-        ],
+      Switch(
+        value: clase["estado"] == "activo",
+        onChanged: (value) async {
+          final nuevoEstado = value ? "activo" : "inactivo";
+          await provider.cambiarEstadoClase(clase["id"], nuevoEstado);
+          cargarDatos(); // recargar lista
+        },
+        activeColor: Colors.white,
+        inactiveThumbColor: Colors.white54,
+        inactiveTrackColor: Colors.black26,
       ),
-    );
-  }
+    ],
+  );
+}
 
   Widget _dialogButton(
     BuildContext context,

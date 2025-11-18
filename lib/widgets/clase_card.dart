@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class ClaseCard extends StatelessWidget {
   final String title;
   final String description;
   final Color color;
+  final bool isInactive; // 👈 NUEVO
   final VoidCallback? onTap;
+  final Widget? footerWidget;
 
   const ClaseCard({
     super.key,
@@ -13,9 +14,11 @@ class ClaseCard extends StatelessWidget {
     required this.description,
     required this.color,
     this.onTap,
+    this.footerWidget,
+    this.isInactive = false, // 👈 DEFAULT
   });
 
-  // Oscurecer ligeramente el color para la franja superior
+  // Oscurecer ligeramente color
   Color _darken(Color c, [double amount = 0.1]) {
     final hsl = HSLColor.fromColor(c);
     final hslDark = hsl.withLightness(
@@ -26,11 +29,14 @@ class ClaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseColor = isInactive ? Colors.grey[400]! : color;
+    final topColor = isInactive ? Colors.grey[600]! : _darken(color, 0.08);
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: isInactive ? null : onTap, // ❌ Deshabilitar tap si está inactiva
       child: Container(
         decoration: BoxDecoration(
-          color: color,
+          color: baseColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
@@ -43,28 +49,30 @@ class ClaseCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // * Franja superior donde aparecerá el título dinámico
+            // Franja superior
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: _darken(color, 0.08),
+                color: topColor,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(20),
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.book, color: Colors.white, size: 28),
+                  Icon(Icons.book,
+                      color: Colors.white.withOpacity(isInactive ? 0.6 : 1),
+                      size: 28),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      title, // ← AQUÍ VA EL TÍTULO DINÁMICO
+                      title,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Colors.white.withOpacity(isInactive ? 0.6 : 1),
                       ),
                     ),
                   ),
@@ -72,7 +80,7 @@ class ClaseCard extends StatelessWidget {
               ),
             ),
 
-            // * Descripción
+            // Descripción
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -80,14 +88,26 @@ class ClaseCard extends StatelessWidget {
                   alignment: Alignment.topLeft,
                   child: Text(
                     description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Colors.black54,
+                      color: const Color.fromARGB(221, 77, 78, 76).withOpacity(isInactive ? 0.4 : 0.8),
                     ),
                   ),
                 ),
               ),
             ),
+
+            if (footerWidget != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isInactive ? Colors.grey[500] : topColor,
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
+                ),
+                child: footerWidget,
+              ),
           ],
         ),
       ),

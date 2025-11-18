@@ -3,11 +3,13 @@ import 'package:appzacek/providers/provider_autenticacion.dart';
 import 'package:appzacek/providers/provider_clases.dart';
 import 'package:appzacek/widgets/custom_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:appzacek/calificar_actividad_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../Utils/responsive.dart';
 import 'crearactividad.dart';
+import 'actividad.dart'; 
 
 class MostrarClasePage extends StatelessWidget {
   final String claseId;
@@ -32,6 +34,8 @@ class MostrarClasePage extends StatelessWidget {
         Provider.of<ProviderClases>(context, listen: false);
 
     final tipoUsuario = authProvider.tipoUsuario;
+
+    final nombreClase = titulo; // Usamos el título como nombre de clase
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -185,61 +189,59 @@ Text(
                       ),
                     ),
 
-                    SizedBox(height: responsive.hp(2)),
+ SizedBox(height: responsive.hp(2).clamp(16, 24)),
 
+                    // Título de sección
                     Text(
                       "Actividades",
                       style: TextStyle(
-                        fontSize: responsive.dp(5),
+                        // ✅ CAMBIO: Añadido clamp
+                        fontSize: responsive.dp(5).clamp(18, 24),
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryColor,
                       ),
                     ),
+                    // ✅ CAMBIO: Añadido clamp
+                    SizedBox(height: responsive.hp(2).clamp(16, 24)),
 
-                    SizedBox(height: responsive.hp(1.5)),
-
-                    // LISTADO DE ACTIVIDADES POR STREAM
+                    // 2. OBTENEMOS EL STREAM DE ACTIVIDADES FILTRADAS
                     StreamBuilder<QuerySnapshot>(
-                      stream: actividadesProvider
-                          .obtenerActividadesStreamPorClase(titulo),
-                      builder: (context, snapshotAct) {
-                        if (!snapshotAct.hasData) {
+                      stream:
+                          Provider.of<ProviderActividades>(
+                            context,
+                            listen: false,
+                          ).obtenerActividadesStreamPorClase(
+                            nombreClase,
+                          ), // 👈 FILTRO
+                      builder: (context, snapshotActividades) {
+                        // --- Manejo de estados de carga/error de ACTIVIDADES ---
+                        if (snapshotActividades.connectionState ==
+                            ConnectionState.waiting) {
                           return const Center(
-                              child: CircularProgressIndicator());
+                            child: CircularProgressIndicator(),
+                          );
                         }
-
-                        final docs = snapshotAct.data!.docs;
-
-                        if (docs.isEmpty) {
+                        if (snapshotActividades.hasError) {
                           return Center(
                             child: Text(
-                              "No hay actividades creadas.",
-                              style: TextStyle(
-                                fontSize: responsive.dp(3.6),
-                                color: Colors.black54,
-                              ),
+                              "Error al cargar actividades: ${snapshotActividades.error}",
                             ),
                           );
                         }
+                        if (!snapshotActividades.hasData ||
+                            snapshotActividades.data!.docs.isEmpty) {
+                          return const Center(
+                            child: Text("No hay actividades para esta clase."),
+                          );
+                        }
+
+                        // --- DATOS DE ACTIVIDADES ---
+                        final actividadesDocs = snapshotActividades.data!.docs;
 
                         return Column(
-                          children: docs.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-
-                            final fecha = data["fechaEntrega"] != null
-                                ? (data["fechaEntrega"] as Timestamp)
-                                    .toDate()
-                                : null;
-
-                            return _buildActivityCard(
-                              responsive,
-                              data["titulo"] ?? "Sin título",
-                              fecha != null
-                                  ? "Entrega: ${fecha.day}/${fecha.month}/${fecha.year}"
-                                  : "Sin fecha",
-                              data["descripcion"] ??
-                                  "Sin descripción de actividad",
-                            );
+                          children: actividadesDocs.map((doc) {
+                            // Pasamos el DocumentSnapshot completo
+                            return _buildActivityCard(context, responsive, doc);
                           }).toList(),
                         );
                       },
@@ -254,55 +256,106 @@ Text(
     );
   }
 
-  // TARJETA DE ACTIVIDAD
+  // Tarjeta de actividad (Modificada para aceptar datos)
+  // ✅ CAMBIO: Aplicado clamp() a todos los valores internos
   Widget _buildActivityCard(
+    BuildContext context,
     Responsive responsive,
-    String title,
-    String fecha,
-    String descripcion,
+    DocumentSnapshot actividadDoc,
   ) {
-    return Container(
-      margin: EdgeInsets.only(bottom: responsive.hp(1.5)),
-      padding: EdgeInsets.all(responsive.dp(3.5)),
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.edit,
-                  color: AppTheme.primaryColor, size: responsive.dp(5)),
-              SizedBox(width: responsive.wp(2)),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: responsive.dp(4),
-                  fontWeight: FontWeight.bold,
+    final actividadData = actividadDoc.data() as Map<String, dynamic>;
+
+    // Formateo de fecha
+    String fechaFormateada = "Sin fecha de entrega";
+    if (actividadData['fechaEntrega'] != null &&
+        actividadData['fechaEntrega'] is Timestamp) {
+      final fecha = (actividadData['fechaEntrega'] as Timestamp).toDate();
+      fechaFormateada = "Entrega: ${fecha.day}/${fecha.month}/${fecha.year}";
+    }
+
+    return GestureDetector(
+      // 👈 Añadido para navegar
+      onTap: () {
+        // --- INICIO DE LÓGICA MODIFICADA ---
+        final auth = Provider.of<Authentication>(context, listen: false);
+
+        if (auth.tipoUsuario == 'profesor') {
+          // Si es profesor, va a la pantalla de calificar
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  CalificarActividadPage(actividadId: actividadDoc.id),
+            ),
+          );
+        } else {
+          // Si es alumno, va a la pantalla de detalle de actividad
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ActividadPage(actividadId: actividadDoc.id),
+            ),
+          );
+        }
+        // --- FIN DE LÓGICA MODIFICADA ---
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: responsive.hp(1.5).clamp(10, 15)),
+        padding: EdgeInsets.all(responsive.dp(3.5).clamp(14, 20)),
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.edit,
                   color: AppTheme.primaryColor,
+                  size: responsive.dp(5).clamp(22, 26),
                 ),
+                SizedBox(width: responsive.wp(2).clamp(8, 12)),
+                Flexible(
+                  // Añadido para evitar overflow
+                  child: Text(
+                    actividadData['titulo'] ?? 'Sin Título', // 👈 DATO REAL
+                    style: TextStyle(
+                      fontSize: responsive.dp(4).clamp(16, 19),
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: responsive.hp(0.5).clamp(4, 6)),
+            Text(
+              fechaFormateada, // 👈 DATO REAL
+              style: TextStyle(
+                color: Colors.blue,
+                fontSize: responsive.dp(3).clamp(12, 14),
               ),
-            ],
-          ),
-          SizedBox(height: responsive.hp(0.5)),
-          Text(
-            fecha,
-            style: TextStyle(
-                color: Colors.black54, fontSize: responsive.dp(3.2)),
-          ),
-          SizedBox(height: responsive.hp(0.8)),
-          Text(
-            descripcion,
-            style:
-                TextStyle(color: Colors.black54, fontSize: responsive.dp(3.3)),
-          ),
-        ],
+            ),
+            SizedBox(height: responsive.hp(0.8).clamp(6, 10)),
+            Text(
+              actividadData['descripcion'] ?? 'Sin descripción', // 👈 DATO REAL
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: responsive.dp(3.3).clamp(13, 16),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
+
 
   // DIÁLOGO PARA BORRAR CLASE
   void _showDeleteConfirmationDialog(
