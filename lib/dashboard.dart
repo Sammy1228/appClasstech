@@ -267,17 +267,18 @@ class _DashboardState extends State<Dashboard> {
                             title: clase["title"],
                             description: clase["desc"],
                             color: color,
-                            onTap: () {
-                              // 👇 --- MODIFICACIÓN AQUÍ --- 👇
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  // Pasa el ID de la clase
-                                  builder: (context) =>
-                                      MostrarClasePage(claseId: clase["id"]),
-                                ),
-                              );
-                            },
+                                                        onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => MostrarClasePage(
+        claseId: clase["id"],
+        titulo: clase["title"],
+        descripcion: clase["desc"],
+      ),
+    ),
+  );
+},
                           ),
                         );
                       },

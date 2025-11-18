@@ -23,10 +23,10 @@ class AppTheme {
 
   // Colores de las clases
   static const List<Color> claseColors = [
-    Color.fromARGB(255, 255, 220, 168),
-    Color.fromARGB(255, 253, 184, 208),
-    Color.fromARGB(255, 170, 215, 252),
-    Color.fromARGB(255, 186, 249, 179),
+    Color.fromARGB(255, 247, 223, 186),
+    Color.fromARGB(255, 244, 202, 217),
+    Color.fromARGB(255, 199, 229, 254),
+    Color.fromARGB(255, 220, 250, 200),
   ];
 
   // Cajas de texto reutilizables

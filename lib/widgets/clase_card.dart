@@ -1,70 +1,91 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class ClaseCard extends StatelessWidget {
   final String title;
   final String description;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const ClaseCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.color,
-    required this.onTap,
-  }) : super(key: key);
+    this.onTap,
+  });
+
+  // Oscurecer ligeramente el color para la franja superior
+  Color _darken(Color c, [double amount = 0.1]) {
+    final hsl = HSLColor.fromColor(c);
+    final hslDark = hsl.withLightness(
+      (hsl.lightness - amount).clamp(0.0, 1.0),
+    );
+    return hslDark.toColor();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        // El color de la tarjeta principal es el color base con una opacidad reducida.
         decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
+          color: color,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Color.fromARGB(255, 255, 220, 168).withOpacity(0.4),
+              color: Colors.black12,
               blurRadius: 6,
-              offset: const Offset(0, 3),
+              offset: Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // La parte superior usa el color base con una opacidad más alta.
+            // * Franja superior donde aparecerá el título dinámico
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.8),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+                color: _darken(color, 0.08),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.book, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text(
-                    "Clase",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                  Icon(Icons.book, color: Colors.white, size: 28),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title, // ← AQUÍ VA EL TÍTULO DINÁMICO
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            // El texto de la descripción se mantiene en la parte inferior.
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                description,
-                style: const TextStyle(color: Colors.black54, fontSize: 14),
+
+            // * Descripción
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

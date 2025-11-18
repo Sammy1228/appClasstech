@@ -192,6 +192,22 @@ class ProviderClases extends ChangeNotifier {
       throw Exception("Error al cambiar el estado de la clase: $e");
     }
   }
+  // 🆕 ELIMINAR UNA CLASE POR ID
+Future<void> eliminarClase(String claseId) async {
+  try {
+    await FirebaseFirestore.instance
+        .collection('clases')
+        .doc(claseId)
+        .delete();
+
+    notifyListeners();
+    debugPrint("✅ Clase eliminada correctamente: $claseId");
+  } catch (e) {
+    debugPrint("❌ Error al eliminar la clase: $e");
+    throw Exception("Error al eliminar la clase: $e");
+  }
+}
+
 
   // =======================================================
   // --- INICIO DE NUEVOS MÉTODOS PARA RETROALIMENTACIÓN ---

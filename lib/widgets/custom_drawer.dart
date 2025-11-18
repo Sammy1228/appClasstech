@@ -49,7 +49,7 @@ class CustomDrawer extends StatelessWidget {
                 ),
                 _drawerItem(
                   icon: Icons.settings,
-                  text: "Configuración",
+                  text: "Listas de estudiantes",
                   onTap: () {
                     Navigator.pushReplacementNamed(context, '/config');
                   },
