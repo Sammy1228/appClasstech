@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../Utils/responsive.dart';
 import 'crearactividad.dart';
-import 'actividad.dart'; 
+import 'actividad.dart';
 
 class MostrarClasePage extends StatelessWidget {
   final String claseId;
@@ -28,14 +28,11 @@ class MostrarClasePage extends StatelessWidget {
     final responsive = Responsive(context);
 
     final authProvider = Provider.of<Authentication>(context, listen: false);
-    final actividadesProvider =
-        Provider.of<ProviderActividades>(context, listen: false);
-    final clasesProvider =
-        Provider.of<ProviderClases>(context, listen: false);
-
     final tipoUsuario = authProvider.tipoUsuario;
+    final clasesProvider = Provider.of<ProviderClases>(context, listen: false);
 
-    final nombreClase = titulo; // Usamos el título como nombre de clase
+    // Usamos el título que viene por parámetro como fallback inicial
+    final nombreClase = titulo;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -51,8 +48,11 @@ class MostrarClasePage extends StatelessWidget {
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
-              icon: Icon(Icons.menu,
-                  color: AppTheme.backgroundColor, size: responsive.dp(5)),
+              icon: Icon(
+                Icons.menu,
+                color: AppTheme.backgroundColor,
+                size: responsive.dp(5),
+              ),
               onPressed: () => Scaffold.of(context).openDrawer(),
             );
           },
@@ -61,26 +61,32 @@ class MostrarClasePage extends StatelessWidget {
           // SOLO PROFESOR → mostrar botón crear actividad
           if (tipoUsuario == "profesor")
             IconButton(
-              icon: Icon(Icons.add_box,
-                  color: AppTheme.backgroundColor, size: responsive.dp(5)),
+              icon: Icon(
+                Icons.add_box,
+                color: AppTheme.backgroundColor,
+                size: responsive.dp(5),
+              ),
               onPressed: () {
-               Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => CrearActividadPage(
-      claseId: claseId,
-      tituloClase: titulo,
-    ),
-  ),
-);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CrearActividadPage(
+                      claseId: claseId,
+                      tituloClase: titulo,
+                    ),
+                  ),
+                );
               },
             ),
 
           // SOLO PROFESOR → botón eliminar clase
           if (tipoUsuario == "profesor")
             IconButton(
-              icon: Icon(Icons.delete,
-                  color: AppTheme.backgroundColor, size: responsive.dp(5)),
+              icon: Icon(
+                Icons.delete,
+                color: AppTheme.backgroundColor,
+                size: responsive.dp(5),
+              ),
               onPressed: () {
                 _showDeleteConfirmationDialog(
                   context,
@@ -92,33 +98,62 @@ class MostrarClasePage extends StatelessWidget {
         ],
       ),
       drawer: const CustomDrawer(),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
+      // ✅ CORRECCIÓN 1: Usamos StreamBuilder para ver cambios en tiempo real
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
             .collection("clases")
             .doc(claseId)
-            .get(),
+            .snapshots(), // .snapshots() escucha cambios en vivo
         builder: (context, snapshotClase) {
-          if (!snapshotClase.hasData) {
+          // Manejo de errores y carga
+          if (snapshotClase.hasError) {
+            return Center(child: Text("Error: ${snapshotClase.error}"));
+          }
+
+          if (snapshotClase.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (!snapshotClase.hasData || !snapshotClase.data!.exists) {
+            return const Center(
+              child: Text("La clase no existe o fue eliminada."),
+            );
+          }
+
           final data = snapshotClase.data!.data() as Map<String, dynamic>;
-          final profesorId = data["uidProfesor"];
 
+          // ✅ CORRECCIÓN 2: Validación del ID del profesor para evitar errores nulos
+          final String profesorId = data["uidProfesor"] ?? "";
+
+          // Actualizamos los datos visuales con lo que viene de la base de datos (tiempo real)
+          final tituloReal = data['titulo'] ?? titulo;
+          final descripcionReal = data['descripcion'] ?? descripcion;
+          final codigoAcceso = data['codigoAcceso'] ?? 'N/A';
+
+          // Builder anidado para obtener el nombre del profesor
+          // Nota: El profesor rara vez cambia, por lo que FutureBuilder aquí es aceptable,
+          // pero agregamos validación para que no se quede cargando si no hay ID.
           return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance
-                .collection("profesores")
-                .doc(profesorId)
-                .get(),
+            future: profesorId.isNotEmpty
+                ? FirebaseFirestore.instance
+                      .collection("profesores")
+                      .doc(profesorId)
+                      .get()
+                : null,
             builder: (context, snapshotProfesor) {
-              if (!snapshotProfesor.hasData) {
-                return const Center(child: CircularProgressIndicator());
+              String nombreProfesor = "Cargando...";
+
+              if (profesorId.isEmpty) {
+                nombreProfesor = "Sin profesor asignado";
+              } else if (snapshotProfesor.hasData &&
+                  snapshotProfesor.data != null) {
+                final profData =
+                    snapshotProfesor.data!.data() as Map<String, dynamic>?;
+                nombreProfesor = profData?["nombre"] ?? "Desconocido";
+              } else if (snapshotProfesor.connectionState ==
+                  ConnectionState.done) {
+                nombreProfesor = "Profesor no encontrado";
               }
-
-              final profesor =
-                  snapshotProfesor.data!.data() as Map<String, dynamic>?;
-
-              final nombreProfesor = profesor?["nombre"] ?? "Desconocido";
 
               return SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
@@ -146,7 +181,7 @@ class MostrarClasePage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  titulo,
+                                  tituloReal,
                                   style: TextStyle(
                                     fontSize: responsive.dp(4.8),
                                     fontWeight: FontWeight.bold,
@@ -161,17 +196,17 @@ class MostrarClasePage extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: responsive.hp(1)),
-Text(
-  "Código de acceso: ${data['codigoAcceso'] ?? 'N/A'}",
-  style: TextStyle(
-    fontSize: responsive.dp(3.8),
-    fontWeight: FontWeight.bold,
-    color: Colors.black87,
-  ),
-),
+                                Text(
+                                  "Código de acceso: $codigoAcceso",
+                                  style: TextStyle(
+                                    fontSize: responsive.dp(3.8),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                                 SizedBox(height: responsive.hp(1)),
                                 Text(
-                                  descripcion,
+                                  descripcionReal,
                                   style: AppTheme.bodyText.copyWith(
                                     fontSize: responsive.dp(3.4),
                                   ),
@@ -189,19 +224,17 @@ Text(
                       ),
                     ),
 
- SizedBox(height: responsive.hp(2).clamp(16, 24)),
+                    SizedBox(height: responsive.hp(2).clamp(16, 24)),
 
                     // Título de sección
                     Text(
                       "Actividades",
                       style: TextStyle(
-                        // ✅ CAMBIO: Añadido clamp
                         fontSize: responsive.dp(5).clamp(18, 24),
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryColor,
                       ),
                     ),
-                    // ✅ CAMBIO: Añadido clamp
                     SizedBox(height: responsive.hp(2).clamp(16, 24)),
 
                     // 2. OBTENEMOS EL STREAM DE ACTIVIDADES FILTRADAS
@@ -211,10 +244,9 @@ Text(
                             context,
                             listen: false,
                           ).obtenerActividadesStreamPorClase(
-                            nombreClase,
-                          ), // 👈 FILTRO
+                            nombreClase, // IMPORTANTE: Asegúrate que tus actividades guarden el nombre de la clase o el ID
+                          ),
                       builder: (context, snapshotActividades) {
-                        // --- Manejo de estados de carga/error de ACTIVIDADES ---
                         if (snapshotActividades.connectionState ==
                             ConnectionState.waiting) {
                           return const Center(
@@ -240,7 +272,6 @@ Text(
 
                         return Column(
                           children: actividadesDocs.map((doc) {
-                            // Pasamos el DocumentSnapshot completo
                             return _buildActivityCard(context, responsive, doc);
                           }).toList(),
                         );
@@ -256,8 +287,7 @@ Text(
     );
   }
 
-  // Tarjeta de actividad (Modificada para aceptar datos)
-  // ✅ CAMBIO: Aplicado clamp() a todos los valores internos
+  // Tarjeta de actividad
   Widget _buildActivityCard(
     BuildContext context,
     Responsive responsive,
@@ -265,7 +295,6 @@ Text(
   ) {
     final actividadData = actividadDoc.data() as Map<String, dynamic>;
 
-    // Formateo de fecha
     String fechaFormateada = "Sin fecha de entrega";
     if (actividadData['fechaEntrega'] != null &&
         actividadData['fechaEntrega'] is Timestamp) {
@@ -274,13 +303,10 @@ Text(
     }
 
     return GestureDetector(
-      // 👈 Añadido para navegar
       onTap: () {
-        // --- INICIO DE LÓGICA MODIFICADA ---
         final auth = Provider.of<Authentication>(context, listen: false);
 
         if (auth.tipoUsuario == 'profesor') {
-          // Si es profesor, va a la pantalla de calificar
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -289,7 +315,6 @@ Text(
             ),
           );
         } else {
-          // Si es alumno, va a la pantalla de detalle de actividad
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -297,7 +322,6 @@ Text(
             ),
           );
         }
-        // --- FIN DE LÓGICA MODIFICADA ---
       },
       child: Container(
         margin: EdgeInsets.only(bottom: responsive.hp(1.5).clamp(10, 15)),
@@ -319,9 +343,8 @@ Text(
                 ),
                 SizedBox(width: responsive.wp(2).clamp(8, 12)),
                 Flexible(
-                  // Añadido para evitar overflow
                   child: Text(
-                    actividadData['titulo'] ?? 'Sin Título', // 👈 DATO REAL
+                    actividadData['titulo'] ?? 'Sin Título',
                     style: TextStyle(
                       fontSize: responsive.dp(4).clamp(16, 19),
                       fontWeight: FontWeight.bold,
@@ -334,7 +357,7 @@ Text(
             ),
             SizedBox(height: responsive.hp(0.5).clamp(4, 6)),
             Text(
-              fechaFormateada, // 👈 DATO REAL
+              fechaFormateada,
               style: TextStyle(
                 color: Colors.blue,
                 fontSize: responsive.dp(3).clamp(12, 14),
@@ -342,7 +365,7 @@ Text(
             ),
             SizedBox(height: responsive.hp(0.8).clamp(6, 10)),
             Text(
-              actividadData['descripcion'] ?? 'Sin descripción', // 👈 DATO REAL
+              actividadData['descripcion'] ?? 'Sin descripción',
               style: TextStyle(
                 color: Colors.black54,
                 fontSize: responsive.dp(3.3).clamp(13, 16),
@@ -356,8 +379,6 @@ Text(
     );
   }
 
-
-  // DIÁLOGO PARA BORRAR CLASE
   void _showDeleteConfirmationDialog(
     BuildContext context,
     Responsive responsive,
@@ -367,8 +388,10 @@ Text(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Eliminar clase",
-            style: TextStyle(fontSize: responsive.dp(4.5))),
+        title: Text(
+          "Eliminar clase",
+          style: TextStyle(fontSize: responsive.dp(4.5)),
+        ),
         content: Text(
           "¿Seguro que deseas eliminar esta clase? Esta acción no se puede deshacer.",
           style: TextStyle(fontSize: responsive.dp(3.4)),
@@ -376,14 +399,16 @@ Text(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Cancelar",
-                style: TextStyle(fontSize: responsive.dp(3.5))),
+            child: Text(
+              "Cancelar",
+              style: TextStyle(fontSize: responsive.dp(3.5)),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
               await clasesProvider.eliminarClase(claseId);
               Navigator.pop(context);
-              Navigator.pop(context); // salir a dashboard
+              Navigator.pop(context);
 
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -394,11 +419,13 @@ Text(
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text("Eliminar",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: responsive.dp(3.5),
-                )),
+            child: Text(
+              "Eliminar",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: responsive.dp(3.5),
+              ),
+            ),
           ),
         ],
       ),
