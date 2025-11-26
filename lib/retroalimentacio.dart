@@ -21,20 +21,15 @@ class _RetroalimentacionPageState extends State<RetroalimentacionPage> {
   String? _claseSeleccionadaTitulo;
   final TextEditingController _retroCtrl = TextEditingController();
 
-  // --- INICIO DE LA CORRECCIÓN ---
   late Stream<QuerySnapshot> _clasesStream;
 
   @override
   void initState() {
     super.initState();
-    // Obtenemos el provider (SIN listen)
     final clasesProvider = Provider.of<ProviderClases>(context, listen: false);
-    // Asignamos el stream a la variable de estado UNA SOLA VEZ
     _clasesStream = clasesProvider.obtenerClasesStream();
   }
-  // --- FIN DE LA CORRECCIÓN ---
 
-  // --- Lógica para enviar retroalimentación ---
   Future<void> _enviarRetro(BuildContext context) async {
     final auth = Provider.of<Authentication>(context, listen: false);
     final provider = Provider.of<ProviderClases>(context, listen: false);
@@ -61,7 +56,7 @@ class _RetroalimentacionPageState extends State<RetroalimentacionPage> {
         comentario: comentario,
       );
       _retroCtrl.clear();
-      FocusScope.of(context).unfocus(); // Ocultar teclado
+      FocusScope.of(context).unfocus();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al enviar retroalimentación: $e')),
@@ -80,205 +75,213 @@ class _RetroalimentacionPageState extends State<RetroalimentacionPage> {
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
+        // ✅ CORREGIDO: Fuente adaptable
         title: Text(
           "Retroalimentación",
           style: TextStyle(
             color: AppTheme.backgroundColor,
-            fontSize: responsive.dp(5),
+            fontSize: responsive.headerFontSize,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        iconTheme: IconThemeData(
-          color: AppTheme.backgroundColor,
-          size: responsive.dp(5.5),
-        ),
+        iconTheme: const IconThemeData(color: AppTheme.backgroundColor),
       ),
       drawer: const CustomDrawer(),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(
-          horizontal: responsive.horizontalPadding,
-          vertical: responsive.verticalPadding,
-        ),
-        child: Column(
-          children: [
-            // --- INICIO DE LÓGICA DE CLASES ---
-            // 1. Stream para obtener y filtrar las clases del alumno
-            StreamBuilder<QuerySnapshot>(
-              // --- CAMBIO AQUÍ: Usamos la variable de estado ---
-              stream: _clasesStream,
-              // --- FIN CAMBIO ---
-              builder: (context, snapshotClases) {
-                if (!snapshotClases.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                // Filtrar clases (lógica similar a dashboard.dart)
-                final misClases = <Map<String, dynamic>>[];
-                for (var doc in snapshotClases.data!.docs) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final estado = data['estado'] ?? 'activo';
-                  final List<dynamic> alumnos = data['alumnos'] ?? [];
-
-                  if (authProvider.tipoUsuario == "alumno") {
-                    if (estado == "activo" && alumnos.contains(user?.uid)) {
-                      misClases.add({
-                        "id": doc.id,
-                        "titulo": data['titulo'] ?? 'Sin título',
-                      });
-                    }
-                  } else if (authProvider.tipoUsuario == "profesor") {
-                    if (data['uidProfesor'] == user?.uid &&
-                        estado == "activo") {
-                      misClases.add({
-                        "id": doc.id,
-                        "titulo": data['titulo'] ?? 'Sin título',
-                      });
-                    }
-                  }
-                }
-
-                if (misClases.isEmpty) {
-                  return const Text(
-                    "No estás inscrito en ninguna clase activa.",
-                  );
-                }
-
-                // 2. Dropdown para seleccionar la clase
-                return DropdownButtonFormField<String>(
-                  value: _claseSeleccionadaId,
-                  decoration: AppTheme.inputDecoration("Selecciona una clase"),
-                  items: misClases.map((clase) {
-                    return DropdownMenuItem<String>(
-                      value: clase['id'] as String,
-                      child: Text(clase['titulo'] as String),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _claseSeleccionadaId = value;
-                      _claseSeleccionadaTitulo =
-                          misClases.firstWhere(
-                                (c) => c['id'] == value,
-                              )['titulo']
-                              as String?;
-                    });
-                  },
-                );
-              },
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: responsive.maxContentWidth),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: responsive.horizontalPadding,
+              vertical: responsive.verticalPadding,
             ),
-            SizedBox(height: responsive.hp(2).clamp(16, 24)),
+            child: Column(
+              children: [
+                // 1. Stream para obtener y filtrar las clases
+                StreamBuilder<QuerySnapshot>(
+                  stream: _clasesStream,
+                  builder: (context, snapshotClases) {
+                    if (!snapshotClases.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-            // 3. Campo para escribir retroalimentación (solo alumnos)
-            if (authProvider.tipoUsuario == 'alumno') ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _retroCtrl,
-                      decoration: AppTheme.inputDecoration(
-                        "Escribe tu retroalimentación...",
+                    final misClases = <Map<String, dynamic>>[];
+                    for (var doc in snapshotClases.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final estado = data['estado'] ?? 'activo';
+                      final List<dynamic> alumnos = data['alumnos'] ?? [];
+
+                      if (authProvider.tipoUsuario == "alumno") {
+                        if (estado == "activo" && alumnos.contains(user?.uid)) {
+                          misClases.add({
+                            "id": doc.id,
+                            "titulo": data['titulo'] ?? 'Sin título',
+                          });
+                        }
+                      } else if (authProvider.tipoUsuario == "profesor") {
+                        if (data['uidProfesor'] == user?.uid &&
+                            estado == "activo") {
+                          misClases.add({
+                            "id": doc.id,
+                            "titulo": data['titulo'] ?? 'Sin título',
+                          });
+                        }
+                      }
+                    }
+
+                    if (misClases.isEmpty) {
+                      return const Text(
+                        "No estás inscrito en ninguna clase activa.",
+                      );
+                    }
+
+                    // 2. Dropdown para seleccionar la clase
+                    return ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      child: DropdownButtonFormField<String>(
+                        value: _claseSeleccionadaId,
+                        decoration: AppTheme.inputDecoration(
+                          "Selecciona una clase",
+                        ),
+                        items: misClases.map((clase) {
+                          return DropdownMenuItem<String>(
+                            value: clase['id'] as String,
+                            child: Text(clase['titulo'] as String),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _claseSeleccionadaId = value;
+                            _claseSeleccionadaTitulo =
+                                misClases.firstWhere(
+                                      (c) => c['id'] == value,
+                                    )['titulo']
+                                    as String?;
+                          });
+                        },
                       ),
-                      textCapitalization: TextCapitalization.sentences,
+                    );
+                  },
+                ),
+
+                SizedBox(height: responsive.hp(3)),
+
+                // 3. Campo para escribir retroalimentación (solo alumnos)
+                if (authProvider.tipoUsuario == 'alumno') ...[
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _retroCtrl,
+                            decoration: AppTheme.inputDecoration(
+                              "Escribe tu retroalimentación...",
+                            ),
+                            textCapitalization: TextCapitalization.sentences,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.send),
+                          color: AppTheme.primaryColor,
+                          onPressed: () => _enviarRetro(context),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    color: AppTheme.primaryColor,
-                    onPressed: () => _enviarRetro(context),
-                  ),
+                  SizedBox(height: responsive.hp(3)),
                 ],
-              ),
-              SizedBox(height: responsive.hp(3).clamp(20, 30)),
-            ],
 
-            // 4. Stream para mostrar los comentarios de la clase seleccionada
-            if (_claseSeleccionadaId != null)
-              StreamBuilder<QuerySnapshot>(
-                stream: clasesProvider.getRetroalimentacionClaseStream(
-                  _claseSeleccionadaId!,
-                ),
-                builder: (context, snapshotRetro) {
-                  if (snapshotRetro.connectionState ==
-                      ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshotRetro.hasData ||
-                      snapshotRetro.data!.docs.isEmpty) {
-                    return Center(
-                      child: Text(
-                        "No hay retroalimentación para '${_claseSeleccionadaTitulo ?? ''}'.",
-                      ),
-                    );
-                  }
+                // 4. Stream para mostrar los comentarios
+                if (_claseSeleccionadaId != null)
+                  StreamBuilder<QuerySnapshot>(
+                    stream: clasesProvider.getRetroalimentacionClaseStream(
+                      _claseSeleccionadaId!,
+                    ),
+                    builder: (context, snapshotRetro) {
+                      if (snapshotRetro.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshotRetro.hasData ||
+                          snapshotRetro.data!.docs.isEmpty) {
+                        return Center(
+                          child: Text(
+                            "No hay retroalimentación para '${_claseSeleccionadaTitulo ?? ''}'.",
+                          ),
+                        );
+                      }
 
-                  final comentarios = snapshotRetro.data!.docs;
+                      final comentarios = snapshotRetro.data!.docs;
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: comentarios.length,
-                    itemBuilder: (context, index) {
-                      final data =
-                          comentarios[index].data() as Map<String, dynamic>;
-                      final fecha = (data['timestamp'] as Timestamp?)?.toDate();
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: comentarios.length,
+                          itemBuilder: (context, index) {
+                            final data =
+                                comentarios[index].data()
+                                    as Map<String, dynamic>;
+                            final fecha = (data['timestamp'] as Timestamp?)
+                                ?.toDate();
 
-                      return _buildRetroCard(
-                        data['nombreAlumno'] ?? 'Alumno',
-                        data['comentario'] ?? '',
-                        fecha,
-                        responsive,
+                            return _buildRetroCard(
+                              data['nombreAlumno'] ?? 'Alumno',
+                              data['comentario'] ?? '',
+                              fecha,
+                              responsive,
+                            );
+                          },
+                        ),
                       );
                     },
-                  );
-                },
-              )
-            else
-              const Center(
-                child: Text(
-                  "Selecciona una clase para ver la retroalimentación.",
-                ),
-              ),
-            // --- FIN DE LÓGICA DE CLASES ---
-          ],
+                  )
+                else
+                  const Center(
+                    child: Text(
+                      "Selecciona una clase para ver la retroalimentación.",
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  // Widget para mostrar la tarjeta de retroalimentación
   Widget _buildRetroCard(
     String nombre,
     String comentario,
     DateTime? fecha,
     Responsive responsive,
   ) {
-    // Generar inicial
     final inicial = nombre.isNotEmpty ? nombre[0].toUpperCase() : '?';
-    // Generar color basado en el nombre
     final color = Colors.primaries[nombre.hashCode % Colors.primaries.length];
 
     return Card(
-      margin: EdgeInsets.only(bottom: responsive.hp(1.5).clamp(10, 15)),
+      margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(responsive.dp(3.5).clamp(12, 16)),
+        padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              radius: responsive.dp(4.5),
               backgroundColor: color,
               child: Text(
                 inicial,
-                style: TextStyle(
-                  fontSize: responsive.dp(4),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.backgroundColor,
+                  color: Colors.white,
                 ),
               ),
             ),
-            SizedBox(width: responsive.wp(3)),
+            const SizedBox(width: 15),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +294,7 @@ class _RetroalimentacionPageState extends State<RetroalimentacionPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: color,
-                          fontSize: responsive.dp(3.5).clamp(14, 16),
+                          fontSize: responsive.bodyFontSize,
                         ),
                       ),
                       Text(
@@ -300,17 +303,15 @@ class _RetroalimentacionPageState extends State<RetroalimentacionPage> {
                             : '',
                         style: TextStyle(
                           color: Colors.grey.shade600,
-                          fontSize: responsive.dp(3).clamp(12, 14),
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: responsive.hp(0.5).clamp(4, 8)),
+                  const SizedBox(height: 5),
                   Text(
                     comentario,
-                    style: AppTheme.bodyText.copyWith(
-                      fontSize: responsive.dp(3.4).clamp(14, 16),
-                    ),
+                    style: TextStyle(fontSize: responsive.bodyFontSize),
                   ),
                 ],
               ),

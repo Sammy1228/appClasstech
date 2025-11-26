@@ -2,60 +2,76 @@ import 'package:flutter/material.dart';
 
 class Responsive {
   final BuildContext context;
-  final Size size;
-  final Orientation orientation;
-  final bool isPortrait;
   final double screenWidth;
   final double screenHeight;
-  
+  final bool isPortrait;
+  final Size size;
 
   Responsive(this.context)
-      : size = MediaQuery.of(context).size,
-        orientation = MediaQuery.of(context).orientation,
-        isPortrait = MediaQuery.of(context).orientation == Orientation.portrait,
-        screenWidth = MediaQuery.of(context).size.width,
-        screenHeight = MediaQuery.of(context).size.height;
+    : size = MediaQuery.of(context).size,
+      screenWidth = MediaQuery.of(context).size.width,
+      screenHeight = MediaQuery.of(context).size.height,
+      isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
 
-  /// Proporciones horizontales y verticales
+  // --- Breakpoints ---
+  bool get isMobile => screenWidth < 600;
+  bool get isTablet => screenWidth >= 600 && screenWidth < 1024;
+  bool get isDesktop => screenWidth >= 1024;
+
+  // --- Dimensiones relativas ---
   double wp(double percent) => screenWidth * percent / 100;
   double hp(double percent) => screenHeight * percent / 100;
-  /// 'dp' devuelve un tamaño relativo fácil de usar para fuentes/íconos.
 
-  double dp(double percent) => screenWidth * percent / 100;
-
-  /// Padding horizontal estándar
-  double get horizontalPadding =>
-      isPortrait ? screenWidth * 0.08 : screenWidth * 0.2;
-
-  /// Padding vertical estándar
-  double get verticalPadding =>
-      isPortrait ? screenHeight * 0.05 : screenHeight * 0.08;
-
-  /// Ancho recomendado para campos o contenedores
-  double get fieldWidth =>
-      isPortrait ? screenWidth * 0.9 : screenWidth * 0.6;
-
-  /// Tamaño de fuente adaptable
-  double get titleFontSize =>
-      isPortrait ? screenWidth * 0.13 : screenWidth * 0.08;
-   double get fontScale =>
-      isPortrait ? screenWidth * 0.13 : screenHeight * 0.13;
-
-  /// Espaciado entre campos
-  double get fieldSpacing =>
-      isPortrait ? screenHeight * 0.02 : screenHeight * 0.015;
-
-  /// Escalado general para texto o elementos
-  double scale(double factorPortrait, double factorLandscape) =>
-      isPortrait ? screenWidth * factorPortrait : screenHeight * factorLandscape;
-
-      double sp(double percent) {
-    double base = MediaQuery.of(context).size.width < 600 ? 100 : 120;
-    return MediaQuery.of(context).size.width * percent / base;
+  double dp(double percent) {
+    final double diagonal = isDesktop ? 1000.0 : screenWidth;
+    return diagonal * percent / 100;
   }
 
-  bool get isMobile => MediaQuery.of(context).size.width < 600;
-  bool get isTablet => MediaQuery.of(context).size.width >= 600 && MediaQuery.of(context).size.width < 1024;
-  bool get isDesktop => MediaQuery.of(context).size.width >= 1024;
-      
+  // ============================================================
+  // --- MÉTODOS DE COMPATIBILIDAD (Para actividad.dart) ---
+  // Estos son los que faltaban y causaban el error.
+  // ============================================================
+
+  // 1. Método scale: Escala valores según orientación
+  double scale(double factorPortrait, double factorLandscape) => isPortrait
+      ? screenWidth * factorPortrait
+      : screenHeight * factorLandscape;
+
+  // 2. Getter fieldWidth: Ancho para formularios antiguos
+  double get fieldWidth => isPortrait ? screenWidth * 0.9 : 400.0;
+
+  // 3. Otros métodos legacy (por seguridad)
+  double get fontScale => isPortrait ? screenWidth * 0.13 : screenHeight * 0.13;
+
+  double sp(double percent) {
+    double base = screenWidth < 600 ? 100 : 120;
+    return screenWidth * percent / base;
+  }
+  // ============================================================
+
+  // --- NUEVA LÓGICA RESPONSIVA (Para Dashboard, Menú, etc.) ---
+
+  // Método auxiliar para valores condicionales
+  T value<T>({required T mobile, T? tablet, T? desktop}) {
+    if (isDesktop) return desktop ?? tablet ?? mobile;
+    if (isTablet) return tablet ?? mobile;
+    return mobile;
+  }
+
+  // --- Estilos Globales ---
+  double get horizontalPadding =>
+      value(mobile: 20.0, tablet: 40.0, desktop: 60.0);
+  double get verticalPadding =>
+      value(mobile: 20.0, tablet: 30.0, desktop: 40.0);
+
+  // Límites de ancho
+  double get maxFormWidth => 500.0;
+  double get maxContentWidth => 1200.0;
+
+  // --- Fuentes ---
+  double get headerFontSize => value(mobile: 20.0, tablet: 22.0, desktop: 24.0);
+  double get titleFontSize => value(mobile: 18.0, tablet: 20.0, desktop: 22.0);
+  double get bodyFontSize => value(mobile: 14.0, tablet: 15.0, desktop: 16.0);
+
+  double get fieldSpacing => hp(value(mobile: 2.0, desktop: 2.5));
 }

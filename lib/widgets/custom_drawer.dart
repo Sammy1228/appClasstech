@@ -9,7 +9,8 @@ class CustomDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<Authentication>(
       builder: (context, auth, child) {
-        final tipoUsuario = auth.tipoUsuario;
+        // Obtenemos el tipo de usuario (normalizado a minúsculas por seguridad)
+        final tipoUsuario = auth.tipoUsuario.toLowerCase();
 
         return Drawer(
           child: Container(
@@ -24,13 +25,16 @@ class CustomDrawer extends StatelessWidget {
                     width: 70,
                     height: 70,
                   ),
-                  accountName: const Text(
-                    "Nombre Apellidos",
-                    style: TextStyle(color: Colors.white),
+                  accountName: Text(
+                    "${auth.nombre} ${auth.apellidos}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  accountEmail: const Text(
-                    "Semestre",
-                    style: TextStyle(color: Colors.white70),
+                  accountEmail: Text(
+                    auth.email,
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ),
                 _drawerItem(
@@ -47,13 +51,17 @@ class CustomDrawer extends StatelessWidget {
                     Navigator.pushReplacementNamed(context, '/perfil');
                   },
                 ),
-                _drawerItem(
-                  icon: Icons.settings,
-                  text: "Listas de estudiantes",
-                  onTap: () {
-                    Navigator.pushReplacementNamed(context, '/config');
-                  },
-                ),
+
+                // 🔒 VISIBLE SOLO PARA PROFESORES
+                if (tipoUsuario == 'profesor')
+                  _drawerItem(
+                    icon: Icons.settings,
+                    text: "Listas de estudiantes",
+                    onTap: () {
+                      Navigator.pushReplacementNamed(context, '/config');
+                    },
+                  ),
+
                 _drawerItem(
                   icon: Icons.book,
                   text: "Clases",
@@ -65,13 +73,22 @@ class CustomDrawer extends StatelessWidget {
                   icon: Icons.feedback,
                   text: "Retroalimentación",
                   onTap: () {
-                    Navigator.pushReplacementNamed(context, '/retroalimentacion');
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/retroalimentacion',
+                    );
                   },
                 ),
+                const Divider(color: Colors.white24),
                 _drawerItem(
                   icon: Icons.logout,
                   text: "Cerrar Sesión",
                   onTap: () {
+                    final authProvider = Provider.of<Authentication>(
+                      context,
+                      listen: false,
+                    );
+                    authProvider.logout();
                     Navigator.pushReplacementNamed(context, '/login');
                   },
                 ),

@@ -64,24 +64,29 @@ class _LoginState extends State<Login> {
             children: [
               // 1. Fondo superior con texto
               Column(
-                mainAxisSize:
-                    MainAxisSize.min, // Ocupa solo el espacio necesario
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
-                    height:
-                        responsive.screenHeight *
-                        (responsive.isPortrait ? 0.15 : 0.08),
+                    height: responsive.hp(
+                      responsive.value(mobile: 15, desktop: 8),
+                    ),
                   ),
                   Center(
                     child: Text(
                       "¡Bienvenido!\nIniciar Sesión",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        // ✅ CAMBIO: Añadido clamp
-                        fontSize: responsive.fontScale.clamp(22, 34),
+                        fontSize: responsive.dp(
+                          responsive.value(mobile: 7, desktop: 3.5),
+                        ),
                         fontWeight: FontWeight.bold,
                         color: AppTheme.backgroundColor,
                       ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: responsive.hp(
+                      responsive.value(mobile: 5, desktop: 3),
                     ),
                   ),
                 ],
@@ -89,8 +94,7 @@ class _LoginState extends State<Login> {
 
               // Parte blanca inferior con formulario
               Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
+                child: Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(
                     horizontal: responsive.horizontalPadding,
@@ -103,12 +107,11 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                   child: SingleChildScrollView(
-                    // ✅ CAMBIO: Añadido Center para web
                     child: Center(
+                      // 🟢 RESPONSIVIDAD: Limitamos el ancho en PC
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          // ✅ CAMBIO: maxWidth fijo para el formulario en web
-                          maxWidth: 500,
+                          maxWidth: responsive.maxFormWidth,
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -118,7 +121,7 @@ class _LoginState extends State<Login> {
                               controller: _emailCtrl,
                               decoration: AppTheme.inputDecoration("Correo"),
                             ),
-                            SizedBox(height: responsive.screenHeight * 0.02),
+                            SizedBox(height: responsive.hp(2)),
                             TextField(
                               controller: _passwordCtrl,
                               obscureText: true,
@@ -126,7 +129,7 @@ class _LoginState extends State<Login> {
                                 "Contraseña",
                               ),
                             ),
-                            SizedBox(height: responsive.screenHeight * 0.015),
+                            SizedBox(height: responsive.hp(1.5)),
                             Row(
                               children: [
                                 Checkbox(
@@ -141,20 +144,13 @@ class _LoginState extends State<Login> {
                                   child: Text(
                                     "Recuérdame",
                                     style: TextStyle(
-                                      // ✅ CAMBIO: Añadido clamp
-                                      fontSize:
-                                          (responsive.isPortrait
-                                                  ? responsive.screenWidth *
-                                                        0.04
-                                                  : responsive.screenHeight *
-                                                        0.04)
-                                              .clamp(14, 18),
+                                      fontSize: responsive.bodyFontSize,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: responsive.screenHeight * 0.02),
+                            SizedBox(height: responsive.hp(2)),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.secondaryColor,
@@ -162,7 +158,7 @@ class _LoginState extends State<Login> {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                                 padding: EdgeInsets.symmetric(
-                                  vertical: responsive.screenHeight * 0.018,
+                                  vertical: responsive.hp(1.8).clamp(14, 20),
                                 ),
                               ),
                               onPressed: () async {
@@ -221,19 +217,13 @@ class _LoginState extends State<Login> {
                               child: Text(
                                 _isLoading ? "Cargando..." : "Iniciar Sesión",
                                 style: TextStyle(
-                                  // ✅ CAMBIO: Añadido clamp
-                                  fontSize:
-                                      (responsive.isPortrait
-                                              ? responsive.screenWidth * 0.045
-                                              : responsive.screenHeight * 0.045)
-                                          .clamp(15, 20),
+                                  fontSize: responsive.bodyFontSize + 2,
                                   color: AppTheme.backgroundColor,
                                 ),
                               ),
                             ),
 
-                            // --- INICIO DE CÓDIGO AÑADIDO ---
-                            SizedBox(height: responsive.screenHeight * 0.02),
+                            SizedBox(height: responsive.hp(2)),
                             Center(
                               child: GestureDetector(
                                 onTap: () {
@@ -248,19 +238,13 @@ class _LoginState extends State<Login> {
                                   style: TextStyle(
                                     color: AppTheme.primaryColor,
                                     fontWeight: FontWeight.bold,
-                                    fontSize:
-                                        (responsive.isPortrait
-                                                ? responsive.screenWidth * 0.04
-                                                : responsive.screenHeight *
-                                                      0.04)
-                                            .clamp(14, 18),
+                                    fontSize: responsive.bodyFontSize,
                                   ),
                                 ),
                               ),
                             ),
 
-                            // --- FIN DE CÓDIGO AÑADIDO ---
-                            SizedBox(height: responsive.screenHeight * 0.025),
+                            SizedBox(height: responsive.hp(2.5)),
                             Center(
                               child: GestureDetector(
                                 onTap: () {
@@ -271,14 +255,7 @@ class _LoginState extends State<Login> {
                                     text: "¿No tienes cuenta? ",
                                     style: TextStyle(
                                       color: Colors.black54,
-                                      // ✅ CAMBIO: Añadido clamp
-                                      fontSize:
-                                          (responsive.isPortrait
-                                                  ? responsive.screenWidth *
-                                                        0.04
-                                                  : responsive.screenHeight *
-                                                        0.04)
-                                              .clamp(14, 18),
+                                      fontSize: responsive.bodyFontSize,
                                     ),
                                     children: [
                                       TextSpan(
